@@ -14,7 +14,8 @@ class RolesTable(BaseTable):
 
     assigned_to_users: Mapped[list["AssignedRolesTable"]] = relationship(
         lazy="noload",
-        cascade="all, delete-orphan"
+        cascade="all, delete-orphan",
+        back_populates="role"
     )
 
     __tablename__ = "role"

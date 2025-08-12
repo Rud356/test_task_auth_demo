@@ -7,7 +7,8 @@ from .base_table import BaseTable
 
 
 class CredentialsTable(BaseTable):
-    user_id: Mapped[Uuid[UUID]] = mapped_column(
+    user_id: Mapped[UUID] = mapped_column(
+        Uuid,
         ForeignKey("user.user_id"),
         primary_key=True
     )

@@ -72,6 +72,16 @@ class UsersUsecase(Protocol):
         """
 
     @abstractmethod
+    async def get_user_by_session(self, session_data: SessionData) -> UserDetailed:
+        """
+        Fetches user by their session data.
+
+        :param session_data: Provided session data.
+        :return: Information about user.
+        :raise NotFoundError: If users session is not found amongst active sessions.
+        """
+
+    @abstractmethod
     async def terminate_user(self, user_id: UUID) -> bool:
         """
         Locks out user account and removes all active sessions.

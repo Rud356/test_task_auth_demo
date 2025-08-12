@@ -38,5 +38,5 @@ dev = [
     "Pygments~=2.19.2",
     "sphinx-lint~=1.0.0",
     "pytest~=8.4.1",
-    "pytest-asyncio~=0.26.0",
+    "pytest-asyncio~=1.1.0",
 ]

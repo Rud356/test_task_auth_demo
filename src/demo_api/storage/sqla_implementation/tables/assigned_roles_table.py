@@ -8,15 +8,18 @@ from .roles_table import RolesTable
 
 
 class AssignedRolesTable(BaseTable):
-    user_id: Mapped[Uuid[UUID]] = mapped_column(
+    user_id: Mapped[UUID] = mapped_column(
+        Uuid,
         ForeignKey("user.user_id"),
         primary_key=True
     )
-    role_id: Mapped[int] = mapped_column(primary_key=True)
+    role_id: Mapped[int] = mapped_column(
+        ForeignKey("role.role_id"),
+        primary_key=True
+    )
 
     role: Mapped["RolesTable"] = relationship(
-        lazy="joined",
-        cascade="all, delete-orphan"
+        lazy="joined"
     )
 
     __tablename__ = "assigned_roles"

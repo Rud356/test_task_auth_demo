@@ -9,17 +9,17 @@ from .user_table import UserTable
 
 
 class SessionsTable(BaseTable):
-    user_id: Mapped[Uuid[UUID]] = mapped_column(
+    user_id: Mapped[UUID] = mapped_column(
+        Uuid,
         ForeignKey("user.user_id"),
         primary_key=True
     )
     created_at: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
-    session_id: Mapped[str] = mapped_column(String(32))
+    session_id: Mapped[str] = mapped_column(String(32), primary_key=True)
     is_alive: Mapped[bool] = mapped_column(default=True)
 
     user: Mapped[UserTable] = relationship(
-        lazy="joined",
-        cascade="all, delete-orphan"
+        lazy="joined"
     )
 
     __tablename__ = "session"
