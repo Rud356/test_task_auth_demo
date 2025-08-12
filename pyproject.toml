@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools >= 77.0.3"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "demo_api"
+version = "0.0.1"
+authors = [
+  { name="Rud356", email="r.moroshkin2015@yandex.ru" },
+]
+description = "Test task demo api"
+readme = "README.md"
+requires-python = ">=3.11"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+    "Natural Language :: English",
+]
+license = "BSD-3-Clause"
+license-files = ["LICEN[CS]E*"]
+dependencies = [
+    "sqlalchemy[asyncio]~=2.0.42",
+    "cryptography>=45.0.5",
+    "fastapi[standard]~=0.116.1",
+    "pyjwt>=2.10.1",
+    "asyncpg~=0.30.0"
+]
+
+[project.urls]
+Homepage = "https://github.com/Rud356/test_task_auth_demo"
+Issues = "https://github.com/Rud356/test_task_auth_demo/issues"
+
+[project.optional-dependencies]
+dev = [
+    "mypy~=1.17.1",
+    "ruff~=0.12.7",
+    "sphinx~=8.2.3",
+    "Pygments~=2.19.2",
+    "sphinx-lint~=1.0.0",
+    "pytest~=8.4.1",
+    "pytest-asyncio~=0.26.0",
+]
