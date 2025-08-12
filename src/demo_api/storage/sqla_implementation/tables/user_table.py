@@ -30,7 +30,7 @@ class UserTable(BaseTable):
         lazy="joined",
         cascade="all, delete-orphan"
     )
-    assigned_roles: Mapped[AssignedRolesTable] = relationship(
+    assigned_roles: Mapped[list[AssignedRolesTable]] = relationship(
         lazy="raise",
         cascade="all, delete-orphan"
     )

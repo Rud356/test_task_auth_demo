@@ -2,7 +2,7 @@ from abc import abstractmethod
 from typing import Protocol, runtime_checkable
 from uuid import UUID
 
-from demo_api.dto import User, UserAuthentication, SessionData, UserPermissions
+from demo_api.dto import User, UserAuthentication, SessionData, UserDetailed, UserPermissions
 from demo_api.dto.user_registration import UserRegistration
 
 
@@ -36,6 +36,7 @@ class UsersUsecase(Protocol):
 
         :param session_data: Information about current session.
         :return: Has session been terminated.
+        :raise NotFoundError: If session was not found.
         """
 
     @abstractmethod
@@ -50,7 +51,7 @@ class UsersUsecase(Protocol):
     @abstractmethod
     async def list_users(
         self, limit: int = 100, offset: int = 0, include_deactivated: bool = False
-    ) -> list[User]:
+    ) -> list[UserDetailed]:
         """
         Lists registered users in system.
 
@@ -58,4 +59,24 @@ class UsersUsecase(Protocol):
         :param offset: How many records to skip.
         :param include_deactivated: Specifies if deactivated users are included.
         :return: List of users objects.
+        """
+
+    @abstractmethod
+    async def get_user(self, user_id: UUID) -> UserDetailed:
+        """
+        Fetches information about specified user.
+
+        :param user_id: Users identifier.
+        :return: User information.
+        :raise NotFoundError: If user was not found.
+        """
+
+    @abstractmethod
+    async def terminate_user(self, user_id: UUID) -> bool:
+        """
+        Locks out user account and removes all active sessions.
+
+        :param user_id: Users identifier.
+        :return: Has user been locked out.
+        :raise NotFoundError: If user was not found.
         """
