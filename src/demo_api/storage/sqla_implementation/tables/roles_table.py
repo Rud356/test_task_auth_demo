@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from sqlalchemy import String
@@ -12,7 +13,7 @@ class RolesTable(BaseTable):
     role_id: Mapped[int] = mapped_column(autoincrement=True, primary_key=True)
     role_name: Mapped[str] = mapped_column(String(64))
 
-    assigned_to_users: Mapped[list["AssignedRolesTable"]] = relationship(
+    assigned_to_users: Mapped[list[AssignedRolesTable]] = relationship(
         lazy="noload",
         cascade="all, delete-orphan",
         back_populates="role"

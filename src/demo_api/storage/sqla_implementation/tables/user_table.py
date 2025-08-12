@@ -1,3 +1,4 @@
+import uuid
 from typing import Optional
 from uuid import UUID
 
@@ -11,16 +12,17 @@ from .user_permissions_table import UserPermissionsTable
 
 
 class UserTable(BaseTable):
-    user_id: Mapped[UUID] = mapped_column(Uuid, primary_key=True)
+    user_id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
     name: Mapped[str] = mapped_column(
         String(255)
     )
-    surname: Mapped[Optional[str]] = mapped_column(
+    surname: Mapped[str] = mapped_column(
         String(255)
     )
     third_name: Mapped[Optional[str]] = mapped_column(
         String(255)
     )
+    is_active: Mapped[bool] = mapped_column(default=True)
 
     credentials: Mapped[CredentialsTable] = relationship(
         lazy="raise",

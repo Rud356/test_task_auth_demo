@@ -9,7 +9,6 @@ class User(BaseModel):
     Represents user information.
     """
     user_id: UUID
-    email: EmailStr
     name: str = Field(
         min_length=1, max_length=255, description="Users name"
     )

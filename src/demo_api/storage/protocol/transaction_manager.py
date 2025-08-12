@@ -1,42 +1,22 @@
 from contextlib import AbstractAsyncContextManager
 from inspect import Traceback
-from typing import Any, Protocol, Self, runtime_checkable
+from typing import Any, Generic, Protocol, TypeVar, runtime_checkable
+
+SessionObject = TypeVar("SessionObject", covariant=True)
 
 
 @runtime_checkable
-class TransactionManager(Protocol, AbstractAsyncContextManager[Any]):
+class TransactionManager(Protocol[SessionObject], AbstractAsyncContextManager[Any]):
     """
-    Управляет транзакциями и сохранением изменений.
+    Manages transaction objects for database.
     """
 
-    async def commit(self) -> None:
-        """
-        Saves changes.
-
-        :return: Nothing.
-        """
-
-    async def rollback(self) -> None:
-        """
-        Rolls back changes.
-
-        :return: Nothing.
-        """
-
-    async def start_nested_transaction(self) -> "TransactionManager":
-        """
-        Starts nested transaction.
-
-        :return: New nested transaction.
-        """
-
-    async def __aenter__(self) -> Self:
+    async def __aenter__(self) -> SessionObject:
         """
         Starts transaction.
 
         :return: Transaction object.
         """
-        return self
 
     async def __aexit__(
         self,

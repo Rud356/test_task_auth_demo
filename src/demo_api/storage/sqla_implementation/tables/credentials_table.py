@@ -20,6 +20,5 @@ class CredentialsTable(BaseTable):
         String(64), nullable=True
     )
     salt: Mapped[str] = mapped_column(String(32))
-    is_active: Mapped[bool] = mapped_column(default=True)
 
     __tablename__ = "credentials"

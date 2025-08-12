@@ -5,6 +5,7 @@ import pytest_asyncio
 import pytest
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker, create_async_engine
 
+from demo_api.dto import HashingSettings
 from demo_api.storage.sqla_implementation.tables.base_table import BaseTable
 import demo_api.storage.sqla_implementation.tables
 
@@ -17,7 +18,15 @@ def config() -> AppConfig:
     return load_config(Path(__file__).parent.parent / "test_config.toml")
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture()
+def hashing_settings(config: AppConfig) -> HashingSettings:
+    return HashingSettings(
+        hash_algorithm=config.security.password_hash_algorithm,
+        iterations_count=config.security.password_hash_iterations
+    )
+
+
+@pytest.fixture()
 async def engine(config: AppConfig) -> AsyncEngine:
     engine: AsyncEngine = create_async_engine(
         config.db_settings.connection_string,
@@ -27,7 +36,7 @@ async def engine(config: AppConfig) -> AsyncEngine:
     return engine
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture()
 async def session_maker(engine) -> async_sessionmaker[AsyncSession]:
     session_maker: async_sessionmaker[
         AsyncSession
@@ -46,8 +55,12 @@ async def session(session_maker: async_sessionmaker[AsyncSession]) -> AsyncGener
 
 
 @pytest.fixture()
-async def transaction(session: AsyncSession) -> AsyncGenerator[TransactionSQLA, Any]:
-    async with session.begin() as transaction:
-        yield TransactionSQLA(session, transaction)
+def transaction(session_maker: async_sessionmaker[AsyncSession]) -> TransactionSQLA:
+    return TransactionSQLA(session_maker)
 
-    await session.close()
+
+@pytest.fixture()
+async def setup_database(engine: AsyncEngine):
+    async with engine.begin() as conn:
+        await conn.run_sync(BaseTable.metadata.drop_all)
+        await conn.run_sync(BaseTable.metadata.create_all)

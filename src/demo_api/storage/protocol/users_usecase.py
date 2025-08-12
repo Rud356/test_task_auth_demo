@@ -2,31 +2,36 @@ from abc import abstractmethod
 from typing import Protocol, runtime_checkable
 from uuid import UUID
 
-from demo_api.dto import User, UserAuthentication, SessionData, UserDetailed, UserPermissions
+from demo_api.dto import HashingSettings, User, UserAuthentication, SessionData, UserDetailed, UserPermissions
 from demo_api.dto.user_registration import UserRegistration
 
 
 @runtime_checkable
 class UsersUsecase(Protocol):
     @abstractmethod
-    async def login(self, authentication_data: UserAuthentication) -> SessionData:
+    async def login(self, authentication_data: UserAuthentication, hashing_settings: HashingSettings) -> SessionData:
         """
         Authorizes user by provided authentication request data.
 
         :param authentication_data: Authentication request data.
+        :param hashing_settings: Hashing settings for processing password.
         :return: Valid session data.
         :raise ValueError: Invalid authorization data provided.
         """
         pass
 
     @abstractmethod
-    async def register_user(self, user_data: UserRegistration, permissions: UserPermissions) -> User:
+    async def register_user(
+        self, user_data: UserRegistration, permissions: UserPermissions, hashing_settings: HashingSettings
+    ) -> User:
         """
         Registers user in database with specified permissions.
 
         :param user_data: User details who will be registered.
         :param permissions: New users permissions.
+        :param hashing_settings: Hashing settings for processing password.
         :return: New user information.
+        :raise DataIntegrityError: Registering same account again.
         """
 
     @abstractmethod
@@ -72,11 +77,11 @@ class UsersUsecase(Protocol):
         """
 
     @abstractmethod
-    async def get_user_by_session(self, session_data: SessionData) -> UserDetailed:
+    async def get_user_by_session(self, session_id: str) -> UserDetailed:
         """
-        Fetches user by their session data.
+        Fetches user by their session information.
 
-        :param session_data: Provided session data.
+        :param session_id: Provided session identifier.
         :return: Information about user.
         :raise NotFoundError: If users session is not found amongst active sessions.
         """

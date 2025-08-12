@@ -1,7 +1,7 @@
 from .not_found_error import NotFoundError
-from .integirty_error import IntegrityError
+from .data_integirty_error import DataIntegrityError
 
 __all__ = (
     "NotFoundError",
-    "IntegrityError"
+    "DataIntegrityError"
 )

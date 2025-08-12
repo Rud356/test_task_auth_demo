@@ -1,35 +1,24 @@
 from inspect import Traceback
 from typing import Any, Self
 
-from sqlalchemy.ext.asyncio import AsyncSession, AsyncSessionTransaction
+from sqlalchemy.ext.asyncio import AsyncSession, AsyncSessionTransaction, async_sessionmaker
 
 from demo_api.storage.protocol import TransactionManager
 
 
-class TransactionSQLA(TransactionManager):
+class TransactionSQLA(TransactionManager[AsyncSession]):
     """
     Manages SQLAlchemy ORM session.
     """
 
-    def __init__(self, session: AsyncSession, transaction: AsyncSessionTransaction):
-        self.session: AsyncSession = session
-        self.transaction: AsyncSessionTransaction = transaction
+    def __init__(self, sessionmaker: async_sessionmaker[AsyncSession]):
+        self.sessionmaker: async_sessionmaker[AsyncSession] = sessionmaker
+        self.current_session: AsyncSession | None = None
 
-    async def start_nested_transaction(self) -> "TransactionSQLA":
-        return TransactionSQLA(
-            self.session,
-            self.session.begin_nested()
-        )
+    async def __aenter__(self) -> AsyncSession:
+        self.current_session = self.sessionmaker()
 
-    async def commit(self) -> None:
-        await self.transaction.commit()
-
-    async def rollback(self) -> None:
-        await self.transaction.rollback()
-
-    async def __aenter__(self) -> Self:
-        await self.transaction.__aenter__()
-        return self
+        return self.current_session
 
     async def __aexit__(
         self,
@@ -37,5 +26,6 @@ class TransactionSQLA(TransactionManager):
         exc_value: Exception | Any | None,
         traceback: Traceback | Any
     ) -> None:
-        await self.transaction.__aexit__(exc_type, exc_value, traceback)
+        if self.current_session is not None:
+            await self.current_session.close()
         return None

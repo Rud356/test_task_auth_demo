@@ -1,4 +1,5 @@
 from .create_role_request import CreateRoleRequest
+from .hashing_settings import HashingSettings
 from .resource import Resource
 from .resource_details import ResourceDetails
 from .resource_permissions_update import ResourcePermissionsUpdate
@@ -22,4 +23,5 @@ __all__ = (
     "ResourceDetails",
     "ResourcePermissionsUpdate",
     "ResourcePermissionsDetails",
+    "HashingSettings"
 )
