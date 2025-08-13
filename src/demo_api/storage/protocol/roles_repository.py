@@ -9,6 +9,14 @@ from demo_api.dto import Role
 @runtime_checkable
 class RolesRepository(Protocol):
     @abstractmethod
+    async def list_roles(self) -> list[Role]:
+        """
+        Lists all roles in system.
+
+        :return: List of roles objects.
+        """
+
+    @abstractmethod
     async def create_role(self, role: CreateRoleRequest) -> Role:
         """
         Creates a new role for user.

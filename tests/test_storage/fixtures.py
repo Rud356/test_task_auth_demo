@@ -1,3 +1,5 @@
+import secrets
+
 from pathlib import Path
 from typing import Any, AsyncGenerator
 
@@ -5,11 +7,14 @@ import pytest
 import pytest_asyncio # noqa: enables async mode
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker, create_async_engine
 
-from demo_api.dto import HashingSettings
+from demo_api.dto import HashingSettings, User, UserPermissions
+from demo_api.dto.user_registration import UserRegistration
+from demo_api.storage.sqla_implementation.roles_repository_sqla import RolesRepositorySQLA
 from demo_api.storage.sqla_implementation.tables.base_table import BaseTable # noqa: base metadata
 import demo_api.storage.sqla_implementation.tables # noqa: filling metadata
 
 from demo_api.storage.sqla_implementation.transaction import TransactionSQLA
+from demo_api.storage.sqla_implementation.users_repository_sqla import UsersRepositorySQLA
 from demo_api.utils.config_schema import AppConfig, load_config
 
 
@@ -18,7 +23,7 @@ def config() -> AppConfig:
     return load_config(Path(__file__).parent.parent / "test_config.toml")
 
 
-@pytest.fixture()
+@pytest.fixture(scope="module")
 def hashing_settings(config: AppConfig) -> HashingSettings:
     return HashingSettings(
         hash_algorithm=config.security.password_hash_algorithm,
@@ -30,7 +35,7 @@ def hashing_settings(config: AppConfig) -> HashingSettings:
 async def engine(config: AppConfig) -> AsyncEngine:
     engine: AsyncEngine = create_async_engine(
         config.db_settings.connection_string,
-        echo=True
+        echo=False
     )
 
     return engine
@@ -57,3 +62,40 @@ async def session(session_maker: async_sessionmaker[AsyncSession]) -> AsyncGener
 @pytest.fixture()
 def transaction(session_maker: async_sessionmaker[AsyncSession]) -> TransactionSQLA:
     return TransactionSQLA(session_maker)
+
+
+@pytest.fixture()
+def user_repo(transaction: TransactionSQLA) -> UsersRepositorySQLA:
+    return UsersRepositorySQLA(transaction)
+
+
+@pytest.fixture()
+def roles_repo(transaction: TransactionSQLA) -> RolesRepositorySQLA:
+    return RolesRepositorySQLA(transaction)
+
+
+@pytest.fixture()
+def user_credentials() -> UserRegistration:
+    return UserRegistration(
+        email=f"demo_email{secrets.token_urlsafe(16)}@example.com",
+        name=f"test_{secrets.token_urlsafe(5)}",
+        surname=f"test1_{secrets.token_urlsafe(5)}",
+        third_name=f"test2_{secrets.token_urlsafe(5)}",
+        password=f"DemoPass12{secrets.token_urlsafe(5)}"
+    )
+
+
+@pytest.fixture()
+async def new_registered_user(
+    user_repo: UsersRepositorySQLA,
+    user_credentials: UserRegistration,
+    hashing_settings: HashingSettings
+) -> User:
+    resulting_user: User = await user_repo.register_user(
+        user_credentials,
+        UserPermissions(),
+        hashing_settings
+    )
+    assert resulting_user.user_id and resulting_user.is_active
+
+    return resulting_user
