@@ -1,6 +1,6 @@
 from contextlib import AbstractAsyncContextManager
 from inspect import Traceback
-from typing import Any, Generic, Protocol, TypeVar, runtime_checkable
+from typing import Any, Protocol, TypeVar, runtime_checkable
 
 SessionObject = TypeVar("SessionObject", covariant=True)
 

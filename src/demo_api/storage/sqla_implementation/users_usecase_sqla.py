@@ -5,14 +5,17 @@ from uuid import UUID
 
 from sqlalchemy import Select, Update, and_
 from sqlalchemy.exc import IntegrityError, NoResultFound
-from sqlalchemy.orm import joinedload
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload, selectinload
 from sqlalchemy.orm.exc import StaleDataError
 
 from demo_api.dto import HashingSettings, Role, SessionData, User, UserAuthentication, UserDetailed, UserPermissions
 from demo_api.dto.user_registration import UserRegistration
 from demo_api.storage.exceptions import DataIntegrityError, NotFoundError
 from demo_api.storage.protocol import UsersUsecase
-from demo_api.storage.sqla_implementation.tables import CredentialsTable, SessionsTable, UserPermissionsTable, UserTable
+from demo_api.storage.sqla_implementation.tables import (
+    CredentialsTable, SessionsTable, UserPermissionsTable, UserTable,
+)
 from demo_api.storage.sqla_implementation.transaction import TransactionSQLA
 
 
@@ -20,14 +23,19 @@ class UsersUsecaseSQLA(UsersUsecase):
     def __init__(self, transaction: TransactionSQLA):
         self.transaction: TransactionSQLA = transaction
 
-    async def login(self, authentication_data: UserAuthentication, hashing_settings: HashingSettings) -> SessionData:
+    async def login(
+        self, authentication_data: UserAuthentication, hashing_settings: HashingSettings
+    ) -> SessionData:
         async with self.transaction as tr:
-            query: Select[tuple[UserTable]] = Select(UserTable).join(UserTable.credentials).options(
-                joinedload(UserTable.credentials)
-            ).where(
-                and_(
-                    CredentialsTable.email == authentication_data.email,
-                    UserTable.is_active.is_(True)
+            query: Select[tuple[UserTable]] = (
+                Select(UserTable)
+                .join(UserTable.credentials)
+                .options(joinedload(UserTable.credentials))
+                .where(
+                    and_(
+                        CredentialsTable.email == authentication_data.email,
+                        UserTable.is_active.is_(True)
+                    )
                 )
             )
 
@@ -82,7 +90,7 @@ class UsersUsecaseSQLA(UsersUsecase):
                         "sha3-256",
                         user_data.password.encode("utf-8"),
                         salt.encode("utf-8"),
-                        500_000
+                        hashing_settings.iterations_count
                     ).hex(),
                     salt=salt
                 ),
@@ -113,7 +121,7 @@ class UsersUsecaseSQLA(UsersUsecase):
 
     async def terminate_session(self, session_data: SessionData) -> bool:
         async with self.transaction as tr:
-            current_session_query: Select[tuple[SessionsTable]] = Select(SessionData).where(
+            current_session_query: Select[tuple[SessionsTable]] = Select(SessionsTable).where(
                 SessionsTable.session_id == session_data.session_id
             )
 
@@ -130,20 +138,31 @@ class UsersUsecaseSQLA(UsersUsecase):
             try:
                 await tr.commit()
 
-            except StaleDataError as err:
+            except StaleDataError:
                 return False
 
         return not current_session.is_alive
 
     async def terminate_all_sessions(self, user_id: UUID) -> bool:
         async with self.transaction as tr:
-            await tr.execute(
-                Update(SessionsTable).where(SessionsTable.user_id == user_id)
-                .values(is_alive = False)
-            )
+            await self._terminate_all_sessions(user_id, tr)
             await tr.commit()
 
         return True
+
+    @staticmethod
+    async def _terminate_all_sessions(user_id: UUID, session: AsyncSession) -> None:
+        """
+        Executes query for terminating users.
+
+        :param user_id: User to terminate by ID.
+        :param session: SQLAlchemy session.
+        :return: Nothing.
+        """
+        await session.execute(
+            Update(SessionsTable).where(SessionsTable.user_id == user_id)
+            .values(is_alive=False)
+        )
 
     async def list_users(
         self, limit: int = 100, offset: int = 0, include_deactivated: bool = False
@@ -183,13 +202,17 @@ class UsersUsecaseSQLA(UsersUsecase):
         return users
 
     async def get_user(self, user_id: UUID) -> UserDetailed:
-        query: Select[tuple[UserTable, ...]] = Select(UserTable).options(
-            joinedload(UserTable.user_permissions),
-            joinedload(UserTable.assigned_roles)
+        query: Select[tuple[UserTable, ...]] = (
+            Select(UserTable)
+            .options(
+                joinedload(UserTable.user_permissions),
+                selectinload(UserTable.assigned_roles)
+            )
+            .where(UserTable.user_id == user_id)
         )
 
         async with self.transaction as tr:
-            user_record: UserTable = (await tr.scalar(query)).one()
+            user_record: UserTable = (await tr.execute(query)).scalar_one()
             user_view: UserDetailed = UserDetailed(
                 user_id=user_record.user_id,
                 name=user_record.name,
@@ -211,13 +234,19 @@ class UsersUsecaseSQLA(UsersUsecase):
         return user_view
 
     async def get_user_by_session(self, session_id: str) -> UserDetailed:
-        query: Select[tuple[UserTable]] = Select(UserTable).options(
-            joinedload(UserTable.user_permissions),
-            joinedload(UserTable.assigned_roles)
-        ).join(SessionsTable).where(
-            and_(
-                SessionsTable.session_id == session_id,
-                SessionsTable.is_alive.is_(True)
+        query: Select[tuple[UserTable]] = (
+            Select(UserTable)
+            .options(
+                joinedload(UserTable.user_permissions),
+                selectinload(UserTable.assigned_roles)
+            )
+            .join(SessionsTable)
+            .join(UserPermissionsTable)
+            .where(
+                and_(
+                    SessionsTable.session_id == session_id,
+                    SessionsTable.is_alive.is_(True)
+                )
             )
         )
 
@@ -250,10 +279,11 @@ class UsersUsecaseSQLA(UsersUsecase):
 
     async def terminate_user(self, user_id: UUID) -> bool:
         async with self.transaction as tr:
-            user: Update = Update(UserTable).where(
+            user_termination: Update = Update(UserTable).where(
                 and_(UserTable.is_active.is_(True), UserTable.user_id == user_id)
             ).values(is_active=False)
-            await self.terminate_all_sessions(user_id)
+            await tr.execute(user_termination)
+            await self._terminate_all_sessions(user_id, tr)
 
             await tr.commit()
 

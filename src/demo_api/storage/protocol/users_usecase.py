@@ -17,6 +17,7 @@ class UsersUsecase(Protocol):
         :param hashing_settings: Hashing settings for processing password.
         :return: Valid session data.
         :raise ValueError: Invalid authorization data provided.
+        :raise NotFoundError: If no such user is registered.
         """
         pass
 

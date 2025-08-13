@@ -6,6 +6,6 @@ connection_string = "postgresql+asyncpg://postgres:testpwd@localhost:5433/demo_d
 
 [security]
 password_hash_algorithm = "sha3-256"
-password_hash_iterations = 500000
+password_hash_iterations = 10000
 jwt_signing_secret = "DEMO_SECRET"
 access_token_alive_time_in_seconds = 604800
