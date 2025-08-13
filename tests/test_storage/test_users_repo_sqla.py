@@ -7,7 +7,7 @@ from demo_api.dto import SessionData, User, UserAuthentication, UserDetailed, Us
 from demo_api.dto.user_registration import UserRegistration
 from demo_api.dto.user_update import UserUpdate
 from demo_api.storage.exceptions import NotFoundError
-from demo_api.storage.sqla_implementation.users_usecase_sqla import UsersRepositorySQLA
+from demo_api.storage.sqla_implementation.users_repository_sqla import UsersRepositorySQLA
 from .fixtures import *
 
 @pytest.fixture()
