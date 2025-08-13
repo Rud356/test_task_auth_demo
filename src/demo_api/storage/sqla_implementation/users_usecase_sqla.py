@@ -11,6 +11,7 @@ from sqlalchemy.orm.exc import StaleDataError
 
 from demo_api.dto import HashingSettings, Role, SessionData, User, UserAuthentication, UserDetailed, UserPermissions
 from demo_api.dto.user_registration import UserRegistration
+from demo_api.dto.user_update import UserUpdate
 from demo_api.storage.exceptions import DataIntegrityError, NotFoundError
 from demo_api.storage.protocol import UsersUsecase
 from demo_api.storage.sqla_implementation.tables import (
@@ -48,12 +49,11 @@ class UsersUsecaseSQLA(UsersUsecase):
             if user_data.credentials.password is None:
                 raise ValueError("User is deactivated")
 
-            hashed_input: str = pbkdf2_hmac(
-                hashing_settings.hash_algorithm,
-                authentication_data.password.encode("utf-8"),
-                user_data.credentials.salt.encode("utf-8"),
-                hashing_settings.iterations_count
-            ).hex()
+            hashed_input: str = self.hash_password(
+                authentication_data.password,
+                user_data.credentials.salt,
+                hashing_settings
+            )
 
             if not secrets.compare_digest(hashed_input, user_data.credentials.password):
                 raise ValueError("Invalid password provided")
@@ -86,12 +86,11 @@ class UsersUsecaseSQLA(UsersUsecase):
                 third_name=user_data.third_name,
                 credentials=CredentialsTable(
                     email=user_data.email,
-                    password=pbkdf2_hmac(
-                        "sha3-256",
-                        user_data.password.encode("utf-8"),
-                        salt.encode("utf-8"),
-                        hashing_settings.iterations_count
-                    ).hex(),
+                    password=self.hash_password(
+                        user_data.password,
+                        salt,
+                        hashing_settings
+                    ),
                     salt=salt
                 ),
                 user_permissions=UserPermissionsTable(
@@ -169,11 +168,11 @@ class UsersUsecaseSQLA(UsersUsecase):
     ) -> list[UserDetailed]:
         query: Select[tuple[UserTable, ...]] = Select(UserTable).options(
             joinedload(UserTable.user_permissions),
-            joinedload(UserTable.assigned_roles)
-        )
+            selectinload(UserTable.assigned_roles)
+        ).limit(limit).offset(offset)
 
         if not include_deactivated:
-            query = query.where(UserTable.credentials.is_active)
+            query = query.where(UserTable.is_active)
 
         async with self.transaction as tr:
             users: list[UserDetailed] = []
@@ -201,35 +200,42 @@ class UsersUsecaseSQLA(UsersUsecase):
 
         return users
 
-    async def get_user(self, user_id: UUID) -> UserDetailed:
+    @staticmethod
+    def _get_user_query(user_id: UUID) -> Select[tuple[UserTable, ...]]:
         query: Select[tuple[UserTable, ...]] = (
             Select(UserTable)
             .options(
-                joinedload(UserTable.user_permissions),
-                selectinload(UserTable.assigned_roles)
+                joinedload(UserTable.user_permissions)
             )
             .where(UserTable.user_id == user_id)
         )
 
+        return query
+
+    async def get_user(self, user_id: UUID) -> UserDetailed:
         async with self.transaction as tr:
-            user_record: UserTable = (await tr.execute(query)).scalar_one()
-            user_view: UserDetailed = UserDetailed(
-                user_id=user_record.user_id,
-                name=user_record.name,
-                surname=user_record.surname,
-                third_name=user_record.third_name,
-                is_active=user_record.is_active,
-                roles=[
-                    Role(role_id=assigned_role.role_id, role_name=assigned_role.role.role_name)
-                    for assigned_role in user_record.assigned_roles
-                ],
-                user_permissions=UserPermissions(
-                    edit_roles=user_record.user_permissions.edit_roles,
-                    view_all_resources=user_record.user_permissions.view_all_resources,
-                    administrate_users=user_record.user_permissions.administrate_users,
-                    administrate_resources=user_record.user_permissions.administrate_resources,
-                )
+            query: Select[tuple[UserTable, ...]] = self._get_user_query(user_id).options(
+                selectinload(UserTable.assigned_roles)
             )
+            user_record: UserTable = (await tr.execute(query)).scalar_one()
+
+        user_view: UserDetailed = UserDetailed(
+            user_id=user_record.user_id,
+            name=user_record.name,
+            surname=user_record.surname,
+            third_name=user_record.third_name,
+            is_active=user_record.is_active,
+            roles=[
+                Role(role_id=assigned_role.role_id, role_name=assigned_role.role.role_name)
+                for assigned_role in user_record.assigned_roles
+            ],
+            user_permissions=UserPermissions(
+                edit_roles=user_record.user_permissions.edit_roles,
+                view_all_resources=user_record.user_permissions.view_all_resources,
+                administrate_users=user_record.user_permissions.administrate_users,
+                administrate_resources=user_record.user_permissions.administrate_resources,
+            )
+        )
 
         return user_view
 
@@ -257,23 +263,23 @@ class UsersUsecaseSQLA(UsersUsecase):
             except NoResultFound:
                 raise NotFoundError("No active session was found with provided ID")
 
-            user_view: UserDetailed = UserDetailed(
-                user_id=user_record.user_id,
-                name=user_record.name,
-                surname=user_record.surname,
-                third_name=user_record.third_name,
-                is_active=user_record.is_active,
-                roles=[
-                    Role(role_id=assigned_role.role_id, role_name=assigned_role.role.role_name)
-                    for assigned_role in user_record.assigned_roles
-                ],
-                user_permissions=UserPermissions(
-                    edit_roles=user_record.user_permissions.edit_roles,
-                    view_all_resources=user_record.user_permissions.view_all_resources,
-                    administrate_users=user_record.user_permissions.administrate_users,
-                    administrate_resources=user_record.user_permissions.administrate_resources,
-                )
+        user_view: UserDetailed = UserDetailed(
+            user_id=user_record.user_id,
+            name=user_record.name,
+            surname=user_record.surname,
+            third_name=user_record.third_name,
+            is_active=user_record.is_active,
+            roles=[
+                Role(role_id=assigned_role.role_id, role_name=assigned_role.role.role_name)
+                for assigned_role in user_record.assigned_roles
+            ],
+            user_permissions=UserPermissions(
+                edit_roles=user_record.user_permissions.edit_roles,
+                view_all_resources=user_record.user_permissions.view_all_resources,
+                administrate_users=user_record.user_permissions.administrate_users,
+                administrate_resources=user_record.user_permissions.administrate_resources,
             )
+        )
 
         return user_view
 
@@ -286,5 +292,91 @@ class UsersUsecaseSQLA(UsersUsecase):
             await self._terminate_all_sessions(user_id, tr)
 
             await tr.commit()
+
+        return True
+
+    async def update_user_details(self, user_details: UserUpdate) -> UserDetailed:
+        async with self.transaction as tr:
+            query: Select[tuple[UserTable, ...]] = (
+                self._get_user_query(user_details.user_id)
+                .join(CredentialsTable)
+                .options(
+                    joinedload(UserTable.credentials),
+                    selectinload(UserTable.assigned_roles)
+                )
+            )
+
+            try:
+                user_record: UserTable = (await tr.execute(query)).scalar_one()
+
+            except NoResultFound as err:
+                raise NotFoundError("User with provided ID not found") from err
+
+            if user_details.email is not None:
+                user_record.credentials.email = str(user_details.email)
+
+            if user_details.name is not None:
+                user_record.name = user_details.name
+
+            if user_details.surname is not None:
+                user_record.surname = user_details.surname
+
+            if user_details.third_name is not None:
+                user_record.third_name = user_record.third_name
+
+            await tr.commit()
+
+        user_view: UserDetailed = UserDetailed(
+            user_id=user_record.user_id,
+            # Fixes for pycharm type warnings
+            name=str(user_record.name),
+            surname=str(user_record.surname),
+            third_name=str(user_record.third_name),
+            is_active=user_record.is_active,
+            roles=[
+                Role(role_id=assigned_role.role_id, role_name=assigned_role.role.role_name)
+                for assigned_role in user_record.assigned_roles
+            ],
+            user_permissions=UserPermissions(
+                edit_roles=user_record.user_permissions.edit_roles,
+                view_all_resources=user_record.user_permissions.view_all_resources,
+                administrate_users=user_record.user_permissions.administrate_users,
+                administrate_resources=user_record.user_permissions.administrate_resources,
+            )
+        )
+
+        return user_view
+
+
+    async def change_user_password(self, user_id: UUID, new_password: str, hashing_settings: HashingSettings) -> bool:
+        async with self.transaction as tr:
+            query: Select[tuple[UserTable, ...]] = (
+                self._get_user_query(user_id)
+                .join(CredentialsTable)
+                .options(joinedload(UserTable.credentials))
+            ).where(
+                UserTable.is_active.is_(True)
+            )
+
+            try:
+                user_record: UserTable = (await tr.execute(query)).scalar_one()
+
+            except NoResultFound as err:
+                raise NotFoundError("User with provided ID not found") from err
+
+            new_salt: str = secrets.token_hex(16)
+            user_record.credentials.password = self.hash_password(
+                new_password,
+                new_salt,
+                hashing_settings
+            )
+            user_record.credentials.salt = new_salt
+            await self._terminate_all_sessions(user_id, tr)
+
+            try:
+                await tr.commit()
+
+            except IntegrityError:
+                return False
 
         return True

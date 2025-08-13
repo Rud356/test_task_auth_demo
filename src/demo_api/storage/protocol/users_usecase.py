@@ -1,9 +1,11 @@
 from abc import abstractmethod
+from hashlib import pbkdf2_hmac
 from typing import Protocol, runtime_checkable
 from uuid import UUID
 
 from demo_api.dto import HashingSettings, User, UserAuthentication, SessionData, UserDetailed, UserPermissions
 from demo_api.dto.user_registration import UserRegistration
+from demo_api.dto.user_update import UserUpdate
 
 
 @runtime_checkable
@@ -96,3 +98,42 @@ class UsersUsecase(Protocol):
         :return: Has user been locked out.
         :raise NotFoundError: If user was not found.
         """
+
+    @abstractmethod
+    async def update_user_details(self, user_details: UserUpdate) -> UserDetailed:
+        """
+        Updates general information about user.
+
+        :param user_details: User information to update.
+        :return: Updated details.
+        :raise NotFoundError: If user was not found.
+        """
+
+    @abstractmethod
+    async def change_user_password(self, user_id: UUID, new_password: str, hashing_settings: HashingSettings) -> bool:
+        """
+        Changes user password to a new one with reset of all sessions.
+
+        :param user_id: User to update.
+        :param new_password: New password to set for user.
+        :param hashing_settings: Settings for hashing a password.
+        :return: Flag indicating if password has been changes.
+        :raise NotFoundError: If user is not found in database.
+        """
+
+    @staticmethod
+    def hash_password(password: str, salt: str, hashing_settings: HashingSettings) -> str:
+        """
+        Hashes password for accessing accounts.
+
+        :param password: Users password.
+        :param salt: Salt for hashing password.
+        :param hashing_settings: Settings for hashing.
+        :return: Resulting hash.
+        """
+        return pbkdf2_hmac(
+            hashing_settings.hash_algorithm,
+            password.encode("utf-8"),
+            salt.encode("utf-8"),
+            hashing_settings.iterations_count
+        ).hex()
