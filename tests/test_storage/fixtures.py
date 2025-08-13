@@ -57,10 +57,3 @@ async def session(session_maker: async_sessionmaker[AsyncSession]) -> AsyncGener
 @pytest.fixture()
 def transaction(session_maker: async_sessionmaker[AsyncSession]) -> TransactionSQLA:
     return TransactionSQLA(session_maker)
-
-
-@pytest.fixture()
-async def setup_database(engine: AsyncEngine):
-    async with engine.begin() as conn:
-        await conn.run_sync(BaseTable.metadata.drop_all)
-        await conn.run_sync(BaseTable.metadata.create_all)

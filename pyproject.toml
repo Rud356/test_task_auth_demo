@@ -31,6 +31,9 @@ Homepage = "https://github.com/Rud356/test_task_auth_demo"
 Issues = "https://github.com/Rud356/test_task_auth_demo/issues"
 
 [project.optional-dependencies]
+migration = [
+    "alembic~=1.16.4"
+]
 dev = [
     "mypy~=1.17.1",
     "ruff~=0.12.7",

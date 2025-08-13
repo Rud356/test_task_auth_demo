@@ -6,6 +6,7 @@ from .roles_table import RolesTable
 from .sessions_table import SessionsTable
 from .user_permissions_table import UserPermissionsTable
 from .user_table import UserTable
+from .base_table import BaseTable
 
 __all__ = (
     "AssignedRolesTable",
@@ -15,5 +16,6 @@ __all__ = (
     "RolesTable",
     "UserPermissionsTable",
     "UserTable",
-    "SessionsTable"
+    "SessionsTable",
+    "BaseTable"
 )
