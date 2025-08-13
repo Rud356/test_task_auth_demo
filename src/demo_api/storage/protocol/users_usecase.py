@@ -110,7 +110,12 @@ class UsersUsecase(Protocol):
         """
 
     @abstractmethod
-    async def change_user_password(self, user_id: UUID, new_password: str, hashing_settings: HashingSettings) -> bool:
+    async def change_user_password(
+        self,
+        user_id: UUID,
+        new_password: str,
+        hashing_settings: HashingSettings
+    ) -> bool:
         """
         Changes user password to a new one with reset of all sessions.
 
@@ -122,7 +127,11 @@ class UsersUsecase(Protocol):
         """
 
     @staticmethod
-    def hash_password(password: str, salt: str, hashing_settings: HashingSettings) -> str:
+    def hash_password(
+        password: str,
+        salt: str,
+        hashing_settings: HashingSettings
+    ) -> str:
         """
         Hashes password for accessing accounts.
 

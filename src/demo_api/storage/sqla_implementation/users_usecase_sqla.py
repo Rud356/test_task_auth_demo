@@ -346,8 +346,12 @@ class UsersUsecaseSQLA(UsersUsecase):
 
         return user_view
 
-
-    async def change_user_password(self, user_id: UUID, new_password: str, hashing_settings: HashingSettings) -> bool:
+    async def change_user_password(
+        self,
+        user_id: UUID,
+        new_password: str,
+        hashing_settings: HashingSettings
+    ) -> bool:
         async with self.transaction as tr:
             query: Select[tuple[UserTable, ...]] = (
                 self._get_user_query(user_id)
