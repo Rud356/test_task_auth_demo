@@ -12,14 +12,14 @@ from demo_api.dto import HashingSettings, Role, SessionData, User, UserAuthentic
 from demo_api.dto.user_registration import UserRegistration
 from demo_api.dto.user_update import UserUpdate
 from demo_api.storage.exceptions import DataIntegrityError, NotFoundError
-from demo_api.storage.protocol import UsersUsecase
+from demo_api.storage.protocol import UsersRepository
 from demo_api.storage.sqla_implementation.tables import (
     CredentialsTable, SessionsTable, UserPermissionsTable, UserTable,
 )
 from demo_api.storage.sqla_implementation.transaction import TransactionSQLA
 
 
-class UsersUsecaseSQLA(UsersUsecase):
+class UsersRepositorySQLA(UsersRepository):
     def __init__(self, transaction: TransactionSQLA):
         self.transaction: TransactionSQLA = transaction
 

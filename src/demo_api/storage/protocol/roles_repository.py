@@ -7,7 +7,7 @@ from demo_api.dto import Role
 
 
 @runtime_checkable
-class RolesUsecase(Protocol):
+class RolesRepository(Protocol):
     @abstractmethod
     async def create_role(self, role: CreateRoleRequest) -> Role:
         """

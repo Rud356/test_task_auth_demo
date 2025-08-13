@@ -1,13 +1,13 @@
 from pathlib import Path
 from typing import Any, AsyncGenerator
 
-import pytest_asyncio
 import pytest
+import pytest_asyncio # noqa: enables async mode
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker, create_async_engine
 
 from demo_api.dto import HashingSettings
-from demo_api.storage.sqla_implementation.tables.base_table import BaseTable
-import demo_api.storage.sqla_implementation.tables
+from demo_api.storage.sqla_implementation.tables.base_table import BaseTable # noqa: base metadata
+import demo_api.storage.sqla_implementation.tables # noqa: filling metadata
 
 from demo_api.storage.sqla_implementation.transaction import TransactionSQLA
 from demo_api.utils.config_schema import AppConfig, load_config

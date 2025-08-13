@@ -1,11 +1,11 @@
-from .resource_usecase import ResourceUsecase
-from .roles_usecase import RolesUsecase
+from .resource_repository import ResourceRepository
+from .roles_repository import RolesRepository
 from .transaction_manager import TransactionManager
-from .users_usecase import UsersUsecase
+from .users_repository import UsersRepository
 
 __all__ = (
-    "ResourceUsecase",
-    "RolesUsecase",
-    "UsersUsecase",
+    "ResourceRepository",
+    "RolesRepository",
+    "UsersRepository",
     "TransactionManager"
 )

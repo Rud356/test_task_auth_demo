@@ -9,7 +9,7 @@ from demo_api.dto.user_update import UserUpdate
 
 
 @runtime_checkable
-class UsersUsecase(Protocol):
+class UsersRepository(Protocol):
     @abstractmethod
     async def login(self, authentication_data: UserAuthentication, hashing_settings: HashingSettings) -> SessionData:
         """

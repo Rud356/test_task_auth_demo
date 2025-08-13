@@ -7,12 +7,12 @@ from demo_api.dto import SessionData, User, UserAuthentication, UserDetailed, Us
 from demo_api.dto.user_registration import UserRegistration
 from demo_api.dto.user_update import UserUpdate
 from demo_api.storage.exceptions import NotFoundError
-from demo_api.storage.sqla_implementation.users_usecase_sqla import UsersUsecaseSQLA
+from demo_api.storage.sqla_implementation.users_usecase_sqla import UsersRepositorySQLA
 from .fixtures import *
 
 @pytest.fixture()
-def user_usecase(transaction: TransactionSQLA) -> UsersUsecaseSQLA:
-    return UsersUsecaseSQLA(transaction)
+def user_usecase(transaction: TransactionSQLA) -> UsersRepositorySQLA:
+    return UsersRepositorySQLA(transaction)
 
 
 @pytest.fixture()
@@ -27,7 +27,7 @@ def user_credentials() -> UserRegistration:
 
 
 async def test_user_registration(
-    user_usecase: UsersUsecaseSQLA,
+    user_usecase: UsersRepositorySQLA,
     user_credentials: UserRegistration,
     hashing_settings: HashingSettings
 ):
@@ -40,7 +40,7 @@ async def test_user_registration(
 
 
 async def test_user_authentication(
-    user_usecase: UsersUsecaseSQLA,
+    user_usecase: UsersRepositorySQLA,
     user_credentials: UserRegistration,
     hashing_settings: HashingSettings
 ):
@@ -62,7 +62,7 @@ async def test_user_authentication(
 
 
 async def test_user_authentication_for_missing_user(
-    user_usecase: UsersUsecaseSQLA,
+    user_usecase: UsersRepositorySQLA,
     user_credentials: UserRegistration,
     hashing_settings: HashingSettings
 ):
@@ -77,7 +77,7 @@ async def test_user_authentication_for_missing_user(
 
 
 async def test_user_authentication_with_invalid_password(
-    user_usecase: UsersUsecaseSQLA,
+    user_usecase: UsersRepositorySQLA,
     user_credentials: UserRegistration,
     hashing_settings: HashingSettings
 ):
@@ -98,7 +98,7 @@ async def test_user_authentication_with_invalid_password(
 
 
 async def test_user_session_auth(
-    user_usecase: UsersUsecaseSQLA,
+    user_usecase: UsersRepositorySQLA,
     user_credentials: UserRegistration,
     hashing_settings: HashingSettings
 ):
@@ -124,7 +124,7 @@ async def test_user_session_auth(
 
 
 async def test_user_session_auth_via_not_existing_session(
-    user_usecase: UsersUsecaseSQLA,
+    user_usecase: UsersRepositorySQLA,
     user_credentials: UserRegistration,
     hashing_settings: HashingSettings
 ):
@@ -149,7 +149,7 @@ async def test_user_session_auth_via_not_existing_session(
 
 
 async def test_fetching_user_details(
-    user_usecase: UsersUsecaseSQLA,
+    user_usecase: UsersRepositorySQLA,
     user_credentials: UserRegistration,
     hashing_settings: HashingSettings
 ):
@@ -168,7 +168,7 @@ async def test_fetching_user_details(
 
 
 async def test_user_session_termination(
-    user_usecase: UsersUsecaseSQLA,
+    user_usecase: UsersRepositorySQLA,
     user_credentials: UserRegistration,
     hashing_settings: HashingSettings
 ):
@@ -203,7 +203,7 @@ async def test_user_session_termination(
 
 
 async def test_user_terminating_all_sessions(
-    user_usecase: UsersUsecaseSQLA,
+    user_usecase: UsersRepositorySQLA,
     user_credentials: UserRegistration,
     hashing_settings: HashingSettings
 ):
@@ -240,7 +240,7 @@ async def test_user_terminating_all_sessions(
 
 
 async def test_fetching_many_users(
-    user_usecase: UsersUsecaseSQLA,
+    user_usecase: UsersRepositorySQLA,
     user_credentials: UserRegistration,
     hashing_settings: HashingSettings
 ):
@@ -256,7 +256,7 @@ async def test_fetching_many_users(
 
 
 async def test_terminating_user(
-    user_usecase: UsersUsecaseSQLA,
+    user_usecase: UsersRepositorySQLA,
     user_credentials: UserRegistration,
     hashing_settings: HashingSettings
 ):
@@ -297,7 +297,7 @@ async def test_terminating_user(
         )
 
 async def test_fetching_many_users_with_deactivated(
-    user_usecase: UsersUsecaseSQLA,
+    user_usecase: UsersRepositorySQLA,
     user_credentials: UserRegistration,
     hashing_settings: HashingSettings
 ):
@@ -313,7 +313,7 @@ async def test_fetching_many_users_with_deactivated(
 
 
 async def test_user_changing_password(
-    user_usecase: UsersUsecaseSQLA,
+    user_usecase: UsersRepositorySQLA,
     user_credentials: UserRegistration,
     hashing_settings: HashingSettings
 ):
@@ -350,7 +350,7 @@ async def test_user_changing_password(
 
 
 async def test_updating_user_data(
-    user_usecase: UsersUsecaseSQLA,
+    user_usecase: UsersRepositorySQLA,
     user_credentials: UserRegistration,
     hashing_settings: HashingSettings
 ):

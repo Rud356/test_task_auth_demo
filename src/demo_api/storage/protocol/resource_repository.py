@@ -6,7 +6,7 @@ from demo_api.dto import Resource, ResourceDetails, ResourcePermissionsUpdate, U
 
 
 @runtime_checkable
-class ResourceUsecase(Protocol):
+class ResourceRepository(Protocol):
     @abstractmethod
     async def create_resource(self, author: User, content: str) -> Resource:
         """
