@@ -122,7 +122,7 @@ class ResourceRepositorySQLA(ResourceRepository):
             .limit(limit)
             .offset(offset)
         )
-        query: ExecutableReturnsRows[tuple[ResourceTable]] = (
+        query: ExecutableReturnsRows = (
             select(ResourceTable).from_statement(query_matching)
         )
         resources: list[ResourceDetails] = []
