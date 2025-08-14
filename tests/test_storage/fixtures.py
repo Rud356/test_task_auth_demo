@@ -37,7 +37,7 @@ def hashing_settings(config: AppConfig) -> HashingSettings:
 async def engine(config: AppConfig) -> AsyncEngine:
     engine: AsyncEngine = create_async_engine(
         config.db_settings.connection_string,
-        echo=True
+        echo=False
     )
 
     return engine

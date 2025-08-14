@@ -13,6 +13,7 @@ class Security(BaseModel):
     password_hash_iterations: int = Field(ge=1000, lt=1_000_000)
     jwt_signing_secret: str
     access_token_alive_time_in_seconds: int = Field(ge=600)
+    allowed_cors_domains: list[str]
 
 
 class AppConfig(BaseModel):
