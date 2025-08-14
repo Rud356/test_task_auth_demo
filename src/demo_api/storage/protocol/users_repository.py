@@ -25,7 +25,10 @@ class UsersRepository(Protocol):
 
     @abstractmethod
     async def register_user(
-        self, user_data: UserRegistration, permissions: UserPermissions, hashing_settings: HashingSettings
+        self,
+        user_data: UserRegistration,
+        permissions: UserPermissions,
+        hashing_settings: HashingSettings
     ) -> User:
         """
         Registers user in database with specified permissions.
@@ -127,7 +130,7 @@ class UsersRepository(Protocol):
         """
 
     @staticmethod
-    def hash_password(
+    def _hash_password(
         password: str,
         salt: str,
         hashing_settings: HashingSettings

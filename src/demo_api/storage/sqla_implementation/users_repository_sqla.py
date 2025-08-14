@@ -48,7 +48,7 @@ class UsersRepositorySQLA(UsersRepository):
             if user_data.credentials.password is None:
                 raise ValueError("User is deactivated")
 
-            hashed_input: str = self.hash_password(
+            hashed_input: str = self._hash_password(
                 authentication_data.password,
                 user_data.credentials.salt,
                 hashing_settings
@@ -85,7 +85,7 @@ class UsersRepositorySQLA(UsersRepository):
                 third_name=user_data.third_name,
                 credentials=CredentialsTable(
                     email=user_data.email,
-                    password=self.hash_password(
+                    password=self._hash_password(
                         user_data.password,
                         salt,
                         hashing_settings
@@ -368,7 +368,7 @@ class UsersRepositorySQLA(UsersRepository):
                 raise NotFoundError("User with provided ID not found") from err
 
             new_salt: str = secrets.token_hex(16)
-            user_record.credentials.password = self.hash_password(
+            user_record.credentials.password = self._hash_password(
                 new_password,
                 new_salt,
                 hashing_settings
