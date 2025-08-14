@@ -3,12 +3,10 @@ from demo_api.dto import (
     ResourceDetails,
     ResourcePermissionsDetails,
     ResourcePermissionsUpdate,
-    Role,
     User,
     UserDetailed,
 )
 from demo_api.storage.protocol import ResourceRepository
-from tests.test_storage.fixtures import user_repo
 
 
 class ResourceUseCases:
@@ -134,7 +132,6 @@ class ResourceUseCases:
             return True
 
         can_edit_via_role: bool = False
-        resource: ResourceDetails = resource
         resource_roles: dict[int, ResourcePermissionsDetails] = {
             role_permissions.role_id: role_permissions
             for role_permissions in resource.roles_permissions
@@ -154,7 +151,6 @@ class ResourceUseCases:
             return True
 
         can_view_via_role: bool = False
-        resource: ResourceDetails = resource
         resource_roles: dict[int, ResourcePermissionsDetails] = {
             role_permissions.role_id: role_permissions
             for role_permissions in resource.roles_permissions

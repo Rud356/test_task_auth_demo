@@ -37,7 +37,7 @@ class UserUseCases:
         user_data: UserRegistration,
         permissions: UserPermissions,
         hashing_settings: HashingSettings
-    ):
+    ) -> User:
         """
         Registers user in database with specified permissions.
 

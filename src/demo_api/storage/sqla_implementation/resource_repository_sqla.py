@@ -46,7 +46,7 @@ class ResourceRepositorySQLA(ResourceRepository):
             try:
                 resource: ResourceTable = await tr.get_one(ResourceTable, resource_id)
 
-            except NoResultFound as err:
+            except NoResultFound:
                 raise NotFoundError(f"Resource with {resource_id} not found")
 
             resource.content = content
@@ -63,7 +63,7 @@ class ResourceRepositorySQLA(ResourceRepository):
             try:
                 resource: ResourceTable = await tr.get_one(ResourceTable, resource_id)
 
-            except NoResultFound as err:
+            except NoResultFound:
                 raise NotFoundError(f"Resource with {resource_id} not found")
 
         permissions_details: list[ResourcePermissionsDetails] = [
