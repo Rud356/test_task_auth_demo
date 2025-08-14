@@ -2,11 +2,11 @@ from typing import Sequence
 from uuid import UUID
 
 from sqlalchemy import CompoundSelect, Insert, Select, Update, and_, insert, or_, select, union_all
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, NoResultFound
 from sqlalchemy.sql.selectable import ExecutableReturnsRows
 
 from demo_api.dto import Resource, ResourceDetails, ResourcePermissionsDetails, ResourcePermissionsUpdate, User
-from demo_api.storage.exceptions import DataIntegrityError
+from demo_api.storage.exceptions import DataIntegrityError, NotFoundError
 from demo_api.storage.protocol import ResourceRepository
 from demo_api.storage.sqla_implementation.tables import (
     AssignedRolesTable,
@@ -43,7 +43,12 @@ class ResourceRepositorySQLA(ResourceRepository):
 
     async def edit_resource(self, resource_id: int, content: str) -> Resource:
         async with self.transaction as tr:
-            resource: ResourceTable = await tr.get_one(ResourceTable, resource_id)
+            try:
+                resource: ResourceTable = await tr.get_one(ResourceTable, resource_id)
+
+            except NoResultFound as err:
+                raise NotFoundError(f"Resource with {resource_id} not found")
+
             resource.content = content
             await tr.commit()
 
@@ -51,6 +56,30 @@ class ResourceRepositorySQLA(ResourceRepository):
             resource_id=resource.resource_id,
             author_id=resource.author_id,
             content=str(resource.content)
+        )
+
+    async def get_resource_by_id(self, resource_id: int) -> ResourceDetails:
+        async with self.transaction as tr:
+            try:
+                resource: ResourceTable = await tr.get_one(ResourceTable, resource_id)
+
+            except NoResultFound as err:
+                raise NotFoundError(f"Resource with {resource_id} not found")
+
+        permissions_details: list[ResourcePermissionsDetails] = [
+            ResourcePermissionsDetails(
+                role_id=role_permissions.role_id,
+                role_name=role_permissions.role.role_name,
+                can_edit_resource=role_permissions.can_edit_resource,
+                can_view_resource=role_permissions.can_view_resource
+            )
+            for role_permissions in resource.roles_permissions
+        ]
+        return ResourceDetails(
+            resource_id=resource.resource_id,
+            author_id=resource.author_id,
+            content=resource.content,
+            roles_permissions=permissions_details
         )
 
     async def list_resources(self, limit: int = 100, offset: int = 0) -> list[ResourceDetails]:

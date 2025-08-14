@@ -26,6 +26,17 @@ class ResourceRepository(Protocol):
         :param resource_id: ID of a resource to edit.
         :param content: New content of resource.
         :return: Updated resource information.
+        :raise NotFoundError: If resource is not in database.
+        """
+
+    @abstractmethod
+    async def get_resource_by_id(self, resource_id: int) -> ResourceDetails:
+        """
+        Fetches resource by ID.
+
+        :param resource_id: ID of resource to fetch.
+        :return: Resource information.
+        :raise NotFoundError: If resource is not in database.
         """
 
     @abstractmethod
