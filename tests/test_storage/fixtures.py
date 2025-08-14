@@ -9,6 +9,8 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 
 from demo_api.dto import HashingSettings, User, UserPermissions
 from demo_api.dto.user_registration import UserRegistration
+from demo_api.storage.protocol import ResourceRepository
+from demo_api.storage.sqla_implementation.resource_repository_sqla import ResourceRepositorySQLA
 from demo_api.storage.sqla_implementation.roles_repository_sqla import RolesRepositorySQLA
 from demo_api.storage.sqla_implementation.tables.base_table import BaseTable # noqa: base metadata
 import demo_api.storage.sqla_implementation.tables # noqa: filling metadata
@@ -75,7 +77,11 @@ def roles_repo(transaction: TransactionSQLA) -> RolesRepositorySQLA:
 
 
 @pytest.fixture()
-def user_credentials() -> UserRegistration:
+def resources_repo(transaction: TransactionSQLA) -> ResourceRepositorySQLA:
+    return ResourceRepositorySQLA(transaction)
+
+
+def generate_credentials() -> UserRegistration:
     return UserRegistration(
         email=f"demo_email{secrets.token_urlsafe(16)}@example.com",
         name=f"test_{secrets.token_urlsafe(5)}",
@@ -84,9 +90,12 @@ def user_credentials() -> UserRegistration:
         password=f"DemoPass12{secrets.token_urlsafe(5)}"
     )
 
-
 @pytest.fixture()
-async def new_registered_user(
+def user_credentials() -> UserRegistration:
+    return generate_credentials()
+
+
+async def register_user(
     user_repo: UsersRepositorySQLA,
     user_credentials: UserRegistration,
     hashing_settings: HashingSettings
@@ -99,3 +108,11 @@ async def new_registered_user(
     assert resulting_user.user_id and resulting_user.is_active
 
     return resulting_user
+
+@pytest.fixture()
+async def new_registered_user(
+    user_repo: UsersRepositorySQLA,
+    user_credentials: UserRegistration,
+    hashing_settings: HashingSettings
+) -> User:
+    return await register_user(user_repo, user_credentials, hashing_settings)

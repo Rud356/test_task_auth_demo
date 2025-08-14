@@ -2,7 +2,7 @@ import secrets
 from typing import Sequence
 from uuid import UUID
 
-from sqlalchemy import Select, Update, and_
+from sqlalchemy import Select, Update, and_, select, update
 from sqlalchemy.exc import IntegrityError, NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload, selectinload
@@ -28,7 +28,7 @@ class UsersRepositorySQLA(UsersRepository):
     ) -> SessionData:
         async with self.transaction as tr:
             query: Select[tuple[UserTable]] = (
-                Select(UserTable)
+                select(UserTable)
                 .join(UserTable.credentials)
                 .options(joinedload(UserTable.credentials))
                 .where(
@@ -119,7 +119,7 @@ class UsersRepositorySQLA(UsersRepository):
 
     async def terminate_session(self, session_data: SessionData) -> bool:
         async with self.transaction as tr:
-            current_session_query: Select[tuple[SessionsTable]] = Select(SessionsTable).where(
+            current_session_query: Select[tuple[SessionsTable]] = select(SessionsTable).where(
                 SessionsTable.session_id == session_data.session_id
             )
 
@@ -158,14 +158,14 @@ class UsersRepositorySQLA(UsersRepository):
         :return: Nothing.
         """
         await session.execute(
-            Update(SessionsTable).where(SessionsTable.user_id == user_id)
+            update(SessionsTable).where(SessionsTable.user_id == user_id)
             .values(is_alive=False)
         )
 
     async def list_users(
         self, limit: int = 100, offset: int = 0, include_deactivated: bool = False
     ) -> list[UserDetailed]:
-        query: Select[tuple[UserTable, ...]] = Select(UserTable).options(
+        query: Select[tuple[UserTable]] = select(UserTable).options(
             joinedload(UserTable.user_permissions),
             selectinload(UserTable.assigned_roles)
         ).limit(limit).offset(offset)
@@ -200,9 +200,9 @@ class UsersRepositorySQLA(UsersRepository):
         return users
 
     @staticmethod
-    def _get_user_query(user_id: UUID) -> Select[tuple[UserTable, ...]]:
-        query: Select[tuple[UserTable, ...]] = (
-            Select(UserTable)
+    def _get_user_query(user_id: UUID) -> Select[tuple[UserTable]]:
+        query: Select[tuple[UserTable]] = (
+            select(UserTable)
             .options(
                 joinedload(UserTable.user_permissions)
             )
@@ -213,7 +213,7 @@ class UsersRepositorySQLA(UsersRepository):
 
     async def get_user(self, user_id: UUID) -> UserDetailed:
         async with self.transaction as tr:
-            query: Select[tuple[UserTable, ...]] = self._get_user_query(user_id).options(
+            query: Select[tuple[UserTable]] = self._get_user_query(user_id).options(
                 selectinload(UserTable.assigned_roles)
             )
             user_record: UserTable = (await tr.execute(query)).scalar_one()
@@ -240,7 +240,7 @@ class UsersRepositorySQLA(UsersRepository):
 
     async def get_user_by_session(self, session_id: str) -> UserDetailed:
         query: Select[tuple[UserTable]] = (
-            Select(UserTable)
+            select(UserTable)
             .options(
                 joinedload(UserTable.user_permissions),
                 selectinload(UserTable.assigned_roles)
@@ -284,7 +284,7 @@ class UsersRepositorySQLA(UsersRepository):
 
     async def terminate_user(self, user_id: UUID) -> bool:
         async with self.transaction as tr:
-            user_termination: Update = Update(UserTable).where(
+            user_termination: Update = update(UserTable).where(
                 and_(UserTable.is_active.is_(True), UserTable.user_id == user_id)
             ).values(is_active=False)
             await tr.execute(user_termination)
@@ -296,7 +296,7 @@ class UsersRepositorySQLA(UsersRepository):
 
     async def update_user_details(self, user_details: UserUpdate) -> UserDetailed:
         async with self.transaction as tr:
-            query: Select[tuple[UserTable, ...]] = (
+            query: Select[tuple[UserTable]] = (
                 self._get_user_query(user_details.user_id)
                 .join(CredentialsTable)
                 .options(
@@ -353,7 +353,7 @@ class UsersRepositorySQLA(UsersRepository):
         hashing_settings: HashingSettings
     ) -> bool:
         async with self.transaction as tr:
-            query: Select[tuple[UserTable, ...]] = (
+            query: Select[tuple[UserTable]] = (
                 self._get_user_query(user_id)
                 .join(CredentialsTable)
                 .options(joinedload(UserTable.credentials))

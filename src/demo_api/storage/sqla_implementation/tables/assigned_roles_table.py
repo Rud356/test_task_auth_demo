@@ -14,7 +14,7 @@ class AssignedRolesTable(BaseTable):
         primary_key=True
     )
     role_id: Mapped[int] = mapped_column(
-        ForeignKey("role.role_id"),
+        ForeignKey("role.role_id", ondelete="CASCADE"),
         primary_key=True
     )
 

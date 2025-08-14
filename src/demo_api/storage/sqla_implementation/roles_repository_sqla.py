@@ -1,7 +1,7 @@
 from typing import Sequence
 from uuid import UUID
 
-from sqlalchemy import Select
+from sqlalchemy import Select, select
 from sqlalchemy.exc import IntegrityError, NoResultFound
 from sqlalchemy.orm.exc import StaleDataError
 
@@ -18,7 +18,7 @@ class RolesRepositorySQLA(RolesRepository):
 
     async def list_roles(self) -> list[Role]:
         async with self.transaction as tr:
-            query: Select[tuple[RolesTable, ...]] = Select(RolesTable)
+            query: Select[tuple[RolesTable]] = select(RolesTable)
             all_roles: Sequence[RolesTable] = (await tr.scalars(query)).all()
 
         return [

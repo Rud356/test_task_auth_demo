@@ -7,6 +7,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from .base_table import BaseTable
 
 if TYPE_CHECKING:
+    from .roles_permissions import RolesPermissionsTable
     from .assigned_roles_table import AssignedRolesTable
 
 
@@ -15,6 +16,11 @@ class RolesTable(BaseTable):
     role_name: Mapped[str] = mapped_column(String(64))
 
     assigned_to_users: Mapped[list[AssignedRolesTable]] = relationship(
+        lazy="noload",
+        cascade="all, delete-orphan",
+        back_populates="role"
+    )
+    resources_permissions: Mapped[list[RolesPermissionsTable]] = relationship(
         lazy="noload",
         cascade="all, delete-orphan",
         back_populates="role"

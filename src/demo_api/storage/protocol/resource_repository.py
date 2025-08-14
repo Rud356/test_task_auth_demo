@@ -15,13 +15,15 @@ class ResourceRepository(Protocol):
         :param author: User who creates a resource.
         :param content: Content of resource.
         :return: Newly created resource information.
+        :raises DataIntegrityError: If reference to user is invalid.
         """
 
     @abstractmethod
-    async def edit_resource(self, content: str) -> Resource:
+    async def edit_resource(self, resource_id: int, content: str) -> Resource:
         """
         Changes resource content.
 
+        :param resource_id: ID of a resource to edit.
         :param content: New content of resource.
         :return: Updated resource information.
         """
