@@ -10,6 +10,6 @@ password_hash_iterations = 10000
 jwt_signing_secret = "DEMO_SECRET"
 access_token_alive_time_in_seconds = 604800
 allowed_cors_domains = [
-    "http://localhost:8000",
+    "http://localhost:6060",
     "https://localhost:7023"
 ]

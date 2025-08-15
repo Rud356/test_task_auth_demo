@@ -85,7 +85,7 @@ class UserUseCases:
         :raise ValueError: Invalid authorization data provided.
         :raise NotFoundError: If no such user is registered.
         """
-        return await self.login(
+        return await self.user_repo.login(
             authentication_data,
             hashing_settings
         )
