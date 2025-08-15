@@ -95,7 +95,7 @@ async def _setup_data(
     await roles_repo.assign_role_to_user(user_with_role2.user_id, role_2.role_id)
 
     # Register user without roles
-    user_without_roles: User = await users_repo.register_user(
+    await users_repo.register_user(
         UserRegistration(
             email="demo_empty@example.com",
             name="Test",
