@@ -1,5 +1,9 @@
 import hashlib
+import json
+
+
 from datetime import datetime, timedelta, timezone
+from uuid import UUID
 
 import jwt
 from dishka import FromDishka
@@ -37,8 +41,8 @@ async def authenticate_by_session_token(
     """
     try:
         payload: dict[str, Any] = jwt.decode(
-            session_token.lstrip("Bearer "),
-            hashlib.sha256(app_config.security.jwt_signing_secret.encode("utf8")).hexdigest(),
+            session_token.removeprefix("Bearer "),
+            hashlib.sha256(app_config.security.jwt_signing_secret.encode("utf-8")).hexdigest(),
             algorithms=["HS256"]
         )
         session: SessionData = SessionData.model_validate(payload)
@@ -80,8 +84,8 @@ def encode_user_session_token(
     return jwt.encode(
         {
             "exp": expires_at,
-            **session_data.model_dump()
+            **session_data.model_dump(mode="json")
         },
-        hashlib.sha256(app_config.security.jwt_signing_secret.encode("utf8")).hexdigest(),
-        algorithm="HS256"
+        hashlib.sha256(app_config.security.jwt_signing_secret.encode("utf-8")).hexdigest(),
+        algorithm="HS256",
     ), expires_at
