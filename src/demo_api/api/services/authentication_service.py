@@ -1,9 +1,7 @@
 import hashlib
-import json
 
 
 from datetime import datetime, timedelta, timezone
-from uuid import UUID
 
 import jwt
 from dishka import FromDishka
