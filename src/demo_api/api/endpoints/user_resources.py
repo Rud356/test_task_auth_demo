@@ -1,7 +1,7 @@
 from uuid import UUID
 
 from dishka import FromDishka
-from fastapi import Depends, HTTPException, Query, Response
+from fastapi import Depends, HTTPException, Query
 from starlette.responses import PlainTextResponse
 from typing_extensions import Annotated
 
@@ -26,7 +26,15 @@ from ..services.authentication_service import UserAuthenticatedData
 @api.get(
     "/users",
     description="Fetches list of users",
-    tags=["Administrative", "User"]
+    tags=["Administrative", "User"],
+    responses={
+        200: {
+            "description": "Users list fetched"
+        },
+        403: {
+            "description": "User doesn't have permission for viewing all users"
+        },
+    }
 )
 async def get_users(
     user_use_case: FromDishka[UserUseCases],
@@ -56,7 +64,12 @@ async def get_users(
 @api.get(
     "/users/me",
     description="Fetches current user",
-    tags=["User"]
+    tags=["User"],
+    responses={
+        200: {
+            "description": "Users information"
+        },
+    }
 )
 async def get_current_user(
     user_session_data: Annotated[
@@ -72,7 +85,15 @@ async def get_current_user(
 @api.get(
     "/users/{user_id}",
     description="Fetches user by their ID",
-    tags=["User"]
+    tags=["User"],
+    responses={
+        200: {
+            "description": "Fetched user successfully"
+        },
+        404: {
+            "description": "User not found"
+        },
+    }
 )
 async def get_user_by_id(
     user_use_case: FromDishka[UserUseCases],
@@ -97,7 +118,15 @@ async def get_user_by_id(
 @api.post(
     "/login",
     description="Authenticates user",
-    tags=["Account management", "User"]
+    tags=["Account management", "User"],
+    responses={
+        200: {
+            "description": "User authenticated successfully"
+        },
+        400: {
+            "description": "User provided invalid credentials"
+        },
+    }
 )
 async def authenticate_user(
     user_use_case: FromDishka[UserUseCases],
@@ -130,7 +159,15 @@ async def authenticate_user(
 @api.post(
     "/logout",
     description="Deauthenticates user from system",
-    tags=["Account management", "User"]
+    tags=["Account management", "User"],
+    responses={
+        200: {
+            "description": "User deauthenticated successfully"
+        },
+        400: {
+            "description": "Users session been terminated before finishing of the current request"
+        },
+    }
 )
 async def logout_user(
     user_use_case: FromDishka[UserUseCases],
@@ -155,7 +192,15 @@ async def logout_user(
     "/register",
     description="Registers new account",
     status_code=201,
-    tags=["Account management", "User"]
+    tags=["Account management", "User"],
+    responses={
+        201: {
+            "description": "User created successfully"
+        },
+        400: {
+            "description": "Users email is already used"
+        },
+    }
 )
 async def register_user(
     user_use_case: FromDishka[UserUseCases],
@@ -173,7 +218,20 @@ async def register_user(
     "/users/create_new",
     description="Creates new user",
     status_code=201,
-    tags=["Account management", "Administrative"]
+    tags=["Account management", "Administrative"],
+    responses={
+        200: {
+            "description": "User created successfully"
+        },
+        400: {
+            "description": "Users email is already in use"
+        },
+        403: {
+            "description":
+                "User can't set provided permissions that are higher than his own "
+                "or user does not have administrative permissions to create users"
+        }
+    }
 )
 async def create_new_user(
     user_use_case: FromDishka[UserUseCases],
@@ -210,7 +268,15 @@ async def create_new_user(
 @api.delete(
     "/sessions",
     description="Terminates all current users sessions",
-    tags=["Account management", "User"]
+    tags=["Account management", "User"],
+    responses={
+        200: {
+            "description": "User sessions terminated successfully"
+        },
+        403: {
+            "description": "User can't terminate provided users sessions"
+        }
+    }
 )
 async def terminate_all_current_users_sessions(
     user_use_case: FromDishka[UserUseCases],
@@ -241,7 +307,15 @@ async def terminate_all_current_users_sessions(
 @api.delete(
     "/sessions/current",
     description="Terminates only current session",
-    tags=["Account management", "User"]
+    tags=["Account management", "User"],
+    responses={
+        200: {
+            "description": "Users session terminated successfully"
+        },
+        403: {
+            "description": "User can't terminate session"
+        }
+    }
 )
 async def terminate_current_session(
     user_use_case: FromDishka[UserUseCases],
@@ -271,7 +345,15 @@ async def terminate_current_session(
 @api.delete(
     "/user/{user_id}/sessions",
     description="Terminates all sessions of a specified user",
-    tags=["Account management", "User", "Administrative"]
+    tags=["Account management", "User", "Administrative"],
+    responses={
+        200: {
+            "description": "Users sessions terminated successfully"
+        },
+        403: {
+            "description": "User can't terminate provided users sessions"
+        }
+    }
 )
 async def terminate_all_user_sessions(
     user_use_case: FromDishka[UserUseCases],
@@ -303,7 +385,18 @@ async def terminate_all_user_sessions(
 @api.patch(
     "/users/{user_id}",
     description="Changes information about specified user",
-    tags=["Account management", "User"]
+    tags=["Account management", "User"],
+    responses={
+        200: {
+            "description": "User sessions terminated successfully"
+        },
+        400: {
+            "description": "User IDs in request path and in body does not match"
+        },
+        403: {
+            "description": "User can't terminate provided users sessions"
+        }
+    }
 )
 async def update_user_by_id(
     user_use_case: FromDishka[UserUseCases],
@@ -338,7 +431,21 @@ async def update_user_by_id(
 @api.delete(
     "/users/{user_id}",
     description="Terminates specified user",
-    tags=["Account management", "Administrative", "User"]
+    tags=["Account management", "Administrative", "User"],
+    responses={
+        200: {
+            "description": "User terminated successfully"
+        },
+        400: {
+            "description": "User IDs in request path and in body does not match"
+        },
+        403: {
+            "description": "User can't terminate provided user"
+        },
+        404: {
+            "description": "User with provided ID was not found"
+        }
+    }
 )
 async def terminate_user(
     user_use_case: FromDishka[UserUseCases],
@@ -382,7 +489,21 @@ async def terminate_user(
 @api.put(
     "/users/{user_id}/password",
     description="Changes password of a specified user",
-    tags=["Account management", "User"]
+    tags=["Account management", "User"],
+    responses={
+        200: {
+            "description": "User changed password successfully"
+        },
+        400: {
+            "description": "User IDs in request path and in body does not match"
+        },
+        403: {
+            "description": "User can't change provided users password"
+        },
+        404: {
+            "description": "User with provided ID was not found"
+        }
+    }
 )
 async def update_users_password(
     user_use_case: FromDishka[UserUseCases],

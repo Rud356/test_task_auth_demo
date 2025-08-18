@@ -5,7 +5,7 @@ from typing_extensions import Annotated
 
 from demo_api.api.services import authentication_service
 from demo_api.dto import Resource, ResourceDetails, ResourcePermissionsUpdate
-from demo_api.storage.exceptions import NotFoundError
+from demo_api.storage.exceptions import DataIntegrityError, NotFoundError
 from demo_api.use_cases import ResourceUseCases
 from .api_router import api
 from .dto import ResourcePermissionsModified
@@ -15,7 +15,15 @@ from ..services.authentication_service import UserAuthenticatedData
 @api.get(
     "/resources",
     description="Fetches a list of resources",
-    tags=["Resources"]
+    tags=["Resources"],
+    responses={
+        200: {
+            "description": "List of all resources"
+        },
+        403: {
+            "description": "User doesn't have permission for fetching all resources"
+        },
+    }
 )
 async def get_list_of_resources(
     user_session: Annotated[
@@ -52,7 +60,15 @@ async def get_list_of_resources(
     "/resources",
     description="Creates a new resource",
     tags=["Resources"],
-    status_code=201
+    status_code=201,
+    responses={
+        201: {
+            "description": "Resource successfully created"
+        },
+        500: {
+            "description": "Reference to user was not found when creating new resource"
+        }
+    }
 )
 async def create_resource(
     user_session: Annotated[
@@ -70,14 +86,25 @@ async def create_resource(
             content
         )
 
-    except PermissionError:
-        raise HTTPException(status_code=403, detail="User can't view all resources")
+    except DataIntegrityError:
+        raise HTTPException(status_code=500, detail="User likely was deleted from database manually")
 
 
 @api.get(
     "/resources/{resource_id}",
     description="Fetches specific resource",
-    tags=["Resources"]
+    tags=["Resources"],
+    responses={
+        200: {
+            "description": "Resource details found"
+        },
+        403: {
+            "description": "User doesn't have permission for fetching resource"
+        },
+        404: {
+            "description": "Resource for fetching was not found"
+        }
+    }
 )
 async def get_resource_by_id(
     user_session: Annotated[
@@ -105,7 +132,18 @@ async def get_resource_by_id(
 @api.patch(
     "/resources/{resource_id}",
     description="Edits resource",
-    tags=["Resources"]
+    tags=["Resources"],
+    responses={
+        200: {
+            "description": "Resource successfully edited"
+        },
+        403: {
+            "description": "User doesn't have permission for editing resource"
+        },
+        404: {
+            "description": "Resource for editing was not found"
+        }
+    }
 )
 async def edit_resource(
     user_session: Annotated[
@@ -128,7 +166,7 @@ async def edit_resource(
     except PermissionError:
         raise HTTPException(
             status_code=403,
-            detail="User can't view all resources"
+            detail="User can't edit resource"
         )
 
     except NotFoundError:
@@ -141,7 +179,18 @@ async def edit_resource(
 @api.put(
     "/resource/{resource_id}/permissions",
     description="Edits access permissions for roles",
-    tags=["Resources", "Permissions"]
+    tags=["Resources", "Permissions"],
+    responses={
+        200: {
+            "description": "Resource permissions been successfully edited"
+        },
+        400: {
+            "description": "Either role or resource were not found"
+        },
+        403: {
+            "description": "User doesn't have permission for editing resource"
+        },
+    }
 )
 async def change_resource_access_permissions(
     user_session: Annotated[

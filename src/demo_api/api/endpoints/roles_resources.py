@@ -2,6 +2,7 @@ from uuid import UUID
 
 from dishka import FromDishka
 from fastapi import Depends, HTTPException, Query, Response
+from starlette.responses import PlainTextResponse
 from typing_extensions import Annotated
 
 from demo_api.api.services import authentication_service
@@ -15,7 +16,7 @@ from ..services.authentication_service import UserAuthenticatedData
 @api.get(
     "/roles",
     description="Lists all roles in system",
-    tags=["Roles"]
+    tags=["Roles"],
 )
 async def get_all_roles(
     _: Annotated[
@@ -33,7 +34,15 @@ async def get_all_roles(
     "/roles",
     description="Creates new role in system",
     tags=["Roles"],
-    status_code=201
+    status_code=201,
+    responses={
+        201: {
+            "description": "Role successfully created"
+        },
+        403: {
+            "description": "User does not have permissions for adding roles"
+        },
+    }
 )
 async def create_role(
     user_sessions: Annotated[
@@ -53,15 +62,25 @@ async def create_role(
     except PermissionError:
         raise HTTPException(status_code=403, detail="User unauthorized to add roles")
 
-    except NotFoundError:
-        raise HTTPException(status_code=404, detail="Role does not exist for modification")
-
 
 @api.put(
     "/roles/{role_id}",
-    description="Creates new role in system",
+    description="Edits role in system",
     tags=["Roles"],
-    status_code=201
+    responses={
+        200: {
+            "description": "Role successfully edited"
+        },
+        400: {
+            "description": "Role ID in path and in body are different"
+        },
+        403: {
+            "description": "User does not have permissions to edit roles"
+        },
+        404: {
+            "description": "Role does not exist for modification"
+        }
+    }
 )
 async def update_role(
     user_sessions: Annotated[
@@ -85,13 +104,26 @@ async def update_role(
     except PermissionError:
         raise HTTPException(status_code=403, detail="User unauthorized to add roles")
 
+
     except NotFoundError:
-        raise HTTPException(status_code=404, detail="Role does not exist for deletion")
+        raise HTTPException(status_code=404, detail="Role does not exist for modification")
+
 
 @api.delete(
     "/roles/{role_id}",
     description="Delete selected role",
-    tags=["Roles"]
+    tags=["Roles"],
+    responses={
+        200: {
+            "description": "Role successfully deleted"
+        },
+        403: {
+            "description": "User does not have permissions to edit roles"
+        },
+        404: {
+            "description": "Role does not exist for modification"
+        }
+    }
 )
 async def delete_role(
     user_sessions: Annotated[
@@ -119,6 +151,14 @@ async def delete_role(
     "/roles/{role_id}/assignments",
     description="Assigns role to a user",
     tags=["Roles", "Permissions"],
+    responses={
+        200: {
+            "description": "Role successfully deleted"
+        },
+        404: {
+            "description": "Role does not exist to be assigned to user or user not found"
+        }
+    }
 )
 async def assign_user_a_role(
     user_sessions: Annotated[
@@ -144,13 +184,24 @@ async def assign_user_a_role(
             )
 
     except PermissionError:
-        raise HTTPException(status_code=403, detail="User unauthorized to add roles")
+        raise HTTPException(status_code=403, detail="User unauthorized to add roles to users")
 
 
 @api.delete(
     "/roles/{role_id}/assignments",
     description="Removes role from user",
-    tags=["Roles", "Permissions"]
+    tags=["Roles", "Permissions"],
+    responses={
+        200: {
+            "description": "Role successfully removed from user"
+        },
+        403: {
+            "description": "User does not have permissions to remove roles from others"
+        },
+        404: {
+            "description": "Role does not exist to be removed from user or user not found"
+        }
+    }
 )
 async def remove_role_from_user(
     user_sessions: Annotated[
@@ -162,12 +213,12 @@ async def remove_role_from_user(
     roles_use_case: FromDishka[RolesUseCases],
     role_id: int,
     from_user_id: Annotated[UUID, Query()]
-) -> Response:
+) -> PlainTextResponse:
     try:
         if await roles_use_case.remove_role_from_user(
                 user_sessions.user, from_user_id, role_id
         ):
-            return Response(content="Ok")
+            return PlainTextResponse(content="Ok")
 
         else:
             raise HTTPException(
@@ -176,4 +227,4 @@ async def remove_role_from_user(
             )
 
     except PermissionError:
-        raise HTTPException(status_code=403, detail="User unauthorized to add roles")
+        raise HTTPException(status_code=403, detail="User unauthorized to add and remove roles on users")
