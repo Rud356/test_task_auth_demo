@@ -37,7 +37,7 @@ migration = [
 ]
 dev = [
     "mypy~=1.17.1",
-    "ruff~=0.12.7",
+    "ruff~=0.12.9",
     "sphinx~=8.2.3",
     "Pygments~=2.19.2",
     "sphinx-lint~=1.0.0",
