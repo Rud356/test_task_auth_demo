@@ -21,7 +21,10 @@ from ..services.authentication_service import UserAuthenticatedData
 
 
 
-@api.get("/user")
+@api.get(
+    "/user",
+    description="Fetches list of users"
+)
 async def get_users(
     user_use_case: FromDishka[UserUseCases],
     user_session_data: Annotated[
@@ -47,7 +50,10 @@ async def get_users(
         )
 
 
-@api.get("/users/me")
+@api.get(
+    "/users/me",
+    description="Fetches current user"
+)
 async def get_current_user(
     user_session_data: Annotated[
         UserAuthenticatedData,
@@ -59,7 +65,10 @@ async def get_current_user(
     return user_session_data.user
 
 
-@api.get("/users/{user_id}")
+@api.get(
+    "/users/{user_id}",
+    description="Fetches user by their ID"
+)
 async def get_user_by_id(
     user_use_case: FromDishka[UserUseCases],
     user_id: UUID,
@@ -80,7 +89,10 @@ async def get_user_by_id(
         )
 
 
-@api.post("/login")
+@api.post(
+    "/login",
+    description="Authenticates user"
+)
 async def authenticate_user(
     user_use_case: FromDishka[UserUseCases],
     app_config: FromDishka[AppConfig],
@@ -110,7 +122,10 @@ async def authenticate_user(
     return response
 
 
-@api.post("/logout")
+@api.post(
+    "/logout",
+    description="Deauthenticates user from system"
+)
 async def logout_user(
     user_use_case: FromDishka[UserUseCases],
     user_session_data: Annotated[
@@ -130,7 +145,10 @@ async def logout_user(
     return response
 
 
-@api.post("/register")
+@api.post(
+    "/register",
+    description="Registers new account"
+)
 async def register_user(
     user_use_case: FromDishka[UserUseCases],
     hashing_settings: FromDishka[HashingSettings],
@@ -143,7 +161,10 @@ async def register_user(
         raise HTTPException(status_code=400, detail="User with provided email is already registered")
 
 
-@api.post("/users/create_new")
+@api.post(
+    "/users/create_new",
+    description="Creates new user"
+)
 async def create_new_user(
     user_use_case: FromDishka[UserUseCases],
     hashing_settings: FromDishka[HashingSettings],
@@ -168,7 +189,10 @@ async def create_new_user(
         raise HTTPException(status_code=400, detail="User with provided email is already registered")
 
 
-@api.delete("/sessions")
+@api.delete(
+    "/sessions",
+    description="Terminates all current users sessions"
+)
 async def terminate_all_current_users_sessions(
     user_use_case: FromDishka[UserUseCases],
     user_session_data: Annotated[
@@ -195,7 +219,10 @@ async def terminate_all_current_users_sessions(
         )
 
 
-@api.delete("/sessions/current")
+@api.delete(
+    "/sessions/current",
+    description="Terminates only current session"
+)
 async def terminate_current_session(
     user_use_case: FromDishka[UserUseCases],
     user_session_data: Annotated[
@@ -221,7 +248,10 @@ async def terminate_current_session(
         )
 
 
-@api.delete("/user/{user_id}/sessions")
+@api.delete(
+    "/user/{user_id}/sessions",
+    description="Terminates all sessions of a specified user"
+)
 async def terminate_all_user_sessions(
     user_use_case: FromDishka[UserUseCases],
     user_id: UUID,
@@ -249,7 +279,10 @@ async def terminate_all_user_sessions(
         )
 
 
-@api.patch("/users/{user_id}")
+@api.patch(
+    "/users/{user_id}",
+    description="Changes information about specified user"
+)
 async def update_user_by_id(
     user_use_case: FromDishka[UserUseCases],
     user_id: UUID,
@@ -280,7 +313,10 @@ async def update_user_by_id(
         )
 
 
-@api.delete("/users/{user_id}")
+@api.delete(
+    "/users/{user_id}",
+    description="Terminates specified user"
+)
 async def terminate_user(
     user_use_case: FromDishka[UserUseCases],
     user_id: UUID,
@@ -310,7 +346,10 @@ async def terminate_user(
         )
 
 
-@api.put("/users/{user_id}/password")
+@api.put(
+    "/users/{user_id}/password",
+    description="Changes password of a specified user"
+)
 async def update_users_password(
     user_use_case: FromDishka[UserUseCases],
     user_id: UUID,
