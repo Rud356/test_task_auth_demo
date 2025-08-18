@@ -105,7 +105,10 @@ class ResourceUseCases:
         raise PermissionError("User does not have access to editing this resource")
 
     async def set_roles_permissions_on_resource(
-        self, requested_by: UserDetailed, resource_id: int, resource_permissions: ResourcePermissionsUpdate
+        self,
+        requested_by: UserDetailed,
+        resource_id: int,
+        resource_permissions: ResourcePermissionsUpdate
     ) -> bool:
         """
         Changes permissions to a resource.
