@@ -22,7 +22,7 @@ from ..services.authentication_service import UserAuthenticatedData
 
 
 @api.get(
-    "/user",
+    "/users",
     description="Fetches list of users"
 )
 async def get_users(
@@ -186,8 +186,16 @@ async def create_new_user(
         )
 
     except DataIntegrityError:
-        raise HTTPException(status_code=400, detail="User with provided email is already registered")
+        raise HTTPException(
+            status_code=400,
+            detail="User with provided email is already registered"
+        )
 
+    except PermissionError:
+        raise HTTPException(
+            status_code=403,
+            detail="User doesn't have enough permissions to create other users"
+        )
 
 @api.delete(
     "/sessions",
