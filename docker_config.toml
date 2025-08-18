@@ -2,7 +2,7 @@ host = "0.0.0.0"
 port = 6060
 
 [db_settings]
-connection_string = "postgresql+asyncpg://postgres:testpwd@localhost:5432/demo_db"
+connection_string = "postgresql+asyncpg://postgres:testpwd@db:5432/demo_db"
 
 [security]
 password_hash_algorithm = "sha3-256"

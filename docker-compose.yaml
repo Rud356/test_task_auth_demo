@@ -1,10 +1,27 @@
 services:
   db:
-      image: postgres:latest
-      environment:
-        POSTGRES_DB: demo_db
-        POSTGRES_USER: postgres
-        POSTGRES_PASSWORD: testpwd
+    image: postgres:latest
+    environment:
+      POSTGRES_DB: demo_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: testpwd
 
-      ports:
-        - 5433:5432
+    ports:
+      - "5433:5432"
+
+  backend:
+    container_name: demo_api_backend
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "6060:6060"
+    volumes:
+      - ./docker_config.toml:/app/config.toml
+      - ./docker_alembic.ini:/app/alembic.ini
+    depends_on:
+      - db
+
+networks:
+  interconnect:
+    driver: bridge
