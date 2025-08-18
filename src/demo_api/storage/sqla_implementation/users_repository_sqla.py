@@ -216,7 +216,11 @@ class UsersRepositorySQLA(UsersRepository):
             query: Select[tuple[UserTable]] = self._get_user_query(user_id).options(
                 selectinload(UserTable.assigned_roles)
             )
-            user_record: UserTable = (await tr.execute(query)).scalar_one()
+            try:
+                user_record: UserTable = (await tr.execute(query)).scalar_one()
+
+            except NoResultFound:
+                raise NotFoundError("User was not found")
 
         user_view: UserDetailed = UserDetailed(
             user_id=user_record.user_id,

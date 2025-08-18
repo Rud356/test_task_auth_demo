@@ -19,7 +19,6 @@ class UserUseCases:
         Registers user in database with default permissions.
 
         :param user_data: User details who will be registered.
-        :param permissions: New users permissions.
         :param hashing_settings: Hashing settings for processing password.
         :return: New user information.
         :raise DataIntegrityError: Registering same account again.
