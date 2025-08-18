@@ -1,6 +1,5 @@
 import hashlib
 
-
 from datetime import datetime, timedelta, timezone
 
 import jwt

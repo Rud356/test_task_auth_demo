@@ -72,8 +72,6 @@ class RolesUseCases:
         :param user_id: User identifier.
         :param role_id: ID of a role to assign to user.
         :return: Flag signifying role has been assigned to a user.
-        :raise IntegrityError: If user already has the same role,
-        or if user or role are is not in database.
         :raise PermissionError: If user doesn't have permission to edit roles,
         or tries to updates himself.
         """
