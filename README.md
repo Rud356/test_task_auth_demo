@@ -6,6 +6,7 @@
 - Установленный Python 3.13
 - Установленный Docker и Docker-compose 
 
+Шаги установки:
 1. Создать виртуальное окружение на основе Python 3.13 командой `python -m venv venv`
 2. Активировать виртуальное окружение командой `./venv/Scripts/activate` для Windows, или
 `source ./venv/bin/activate` для Linux
@@ -24,6 +25,13 @@
 - `docker-compose up` - Предварительная установка и запуск сервисов
 - `docker exec -it demo_api_backend alembic upgrade head` - запуск миграций БД
 - `docker exec -it demo_api_backend python -m src.demo_api --create-demo-data` - запуск создания тестовых данных
+
+## Тестирование
+Для проведения тестирования необходимо выполнить установку дополнительных зависимостей
+при помощи команды `pip install -e .[dev]`, и предварительно провести миграции.
+Также необходимо изменить данные для подключения к СУБД в файле ./tests/test_config.toml, содержащим
+конфигурацию доступа к тестовому серверу. Формат аналогичен основному конфигурационному файлу.
+Запуск тестов осуществляется при помощи `pytest ./tests`
 
 ## Тестовые данные
 Пользователи:
@@ -87,3 +95,32 @@
 
 Пользователь не может выдать новому, созданному от его имени пользователю права,
 которыми он сам не обладает на момент создания.
+
+## Конфигурирование
+Параметры:
+host - хост для веб-сервера
+port - порт веб-сервера, на котором запускается приложение (по умолчанию 6060)
+
+Секция db_settings:
+connection_string - строка подключения к базе данных в формате SQLAlchemy
+
+Секция security:
+password_hash_algorithm - алгоритм хеширования паролей
+password_hash_iterations - количество итераций хеширования паролей
+jwt_signing_secret - секрет подписи JWT-токенов
+access_token_alive_time_in_seconds - время жизни токенов сессий
+allowed_cors_domains - список CORS разрешенных доменов
+
+## Использованный стек и библиотеки
+Python 3.13
+FastAPI
+PyJWT
+SQLAlchemy и Alembic
+PostgreSQL
+Docker и Docker-Compose
+
+Линтеры:
+mypy, ruff, sphinx-lint, sphinx-lint
+
+Библиотеки для тестирования:
+pytest, pytest-asyncio
