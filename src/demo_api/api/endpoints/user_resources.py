@@ -2,6 +2,7 @@ from uuid import UUID
 
 from dishka import FromDishka
 from fastapi import Depends, HTTPException, Query, Response
+from starlette.responses import PlainTextResponse
 from typing_extensions import Annotated
 
 from demo_api.api.services import authentication_service
@@ -17,13 +18,15 @@ from demo_api.storage.exceptions import DataIntegrityError, NotFoundError
 from demo_api.use_cases import UserUseCases
 from demo_api.utils.config_schema import AppConfig
 from .api_router import api
+from .dto import UserChangedPassword, UserTerminated
 from ..services.authentication_service import UserAuthenticatedData
 
 
 
 @api.get(
     "/users",
-    description="Fetches list of users"
+    description="Fetches list of users",
+    tags=["Administrative", "User"]
 )
 async def get_users(
     user_use_case: FromDishka[UserUseCases],
@@ -52,7 +55,8 @@ async def get_users(
 
 @api.get(
     "/users/me",
-    description="Fetches current user"
+    description="Fetches current user",
+    tags=["User"]
 )
 async def get_current_user(
     user_session_data: Annotated[
@@ -67,7 +71,8 @@ async def get_current_user(
 
 @api.get(
     "/users/{user_id}",
-    description="Fetches user by their ID"
+    description="Fetches user by their ID",
+    tags=["User"]
 )
 async def get_user_by_id(
     user_use_case: FromDishka[UserUseCases],
@@ -91,15 +96,15 @@ async def get_user_by_id(
 
 @api.post(
     "/login",
-    description="Authenticates user"
+    description="Authenticates user",
+    tags=["Account management", "User"]
 )
 async def authenticate_user(
     user_use_case: FromDishka[UserUseCases],
     app_config: FromDishka[AppConfig],
     hashing_settings: FromDishka[HashingSettings],
     request_body: UserAuthentication
-) -> Response:
-
+) -> PlainTextResponse:
     try:
         session: SessionData = await user_use_case.login(
             request_body,
@@ -109,7 +114,7 @@ async def authenticate_user(
     except NotFoundError:
         raise HTTPException(status_code=400, detail="Invalid credentials")
 
-    response: Response = Response(status_code=200, content="Ok")
+    response: PlainTextResponse = PlainTextResponse(status_code=200, content="Ok")
     token, expires_at = authentication_service.encode_user_session_token(app_config, session)
     response.set_cookie(
         "session",
@@ -124,7 +129,8 @@ async def authenticate_user(
 
 @api.post(
     "/logout",
-    description="Deauthenticates user from system"
+    description="Deauthenticates user from system",
+    tags=["Account management", "User"]
 )
 async def logout_user(
     user_use_case: FromDishka[UserUseCases],
@@ -134,12 +140,12 @@ async def logout_user(
             authentication_service.authenticate_by_session_token
         )
     ]
-) -> Response:
+) -> PlainTextResponse:
     if await user_use_case.terminate_session(user_session_data.session):
-        response: Response = Response(status_code=200, content="Ok")
+        response: PlainTextResponse = PlainTextResponse(status_code=200, content="Ok")
 
     else:
-        response = Response(status_code=400, content="Session has been terminated before")
+        response = PlainTextResponse(status_code=400, content="Session has been terminated before")
 
     response.delete_cookie("session")
     return response
@@ -147,7 +153,9 @@ async def logout_user(
 
 @api.post(
     "/register",
-    description="Registers new account"
+    description="Registers new account",
+    status_code=201,
+    tags=["Account management", "User"]
 )
 async def register_user(
     user_use_case: FromDishka[UserUseCases],
@@ -163,7 +171,9 @@ async def register_user(
 
 @api.post(
     "/users/create_new",
-    description="Creates new user"
+    description="Creates new user",
+    status_code=201,
+    tags=["Account management", "Administrative"]
 )
 async def create_new_user(
     user_use_case: FromDishka[UserUseCases],
@@ -199,7 +209,8 @@ async def create_new_user(
 
 @api.delete(
     "/sessions",
-    description="Terminates all current users sessions"
+    description="Terminates all current users sessions",
+    tags=["Account management", "User"]
 )
 async def terminate_all_current_users_sessions(
     user_use_case: FromDishka[UserUseCases],
@@ -229,7 +240,8 @@ async def terminate_all_current_users_sessions(
 
 @api.delete(
     "/sessions/current",
-    description="Terminates only current session"
+    description="Terminates only current session",
+    tags=["Account management", "User"]
 )
 async def terminate_current_session(
     user_use_case: FromDishka[UserUseCases],
@@ -258,7 +270,8 @@ async def terminate_current_session(
 
 @api.delete(
     "/user/{user_id}/sessions",
-    description="Terminates all sessions of a specified user"
+    description="Terminates all sessions of a specified user",
+    tags=["Account management", "User", "Administrative"]
 )
 async def terminate_all_user_sessions(
     user_use_case: FromDishka[UserUseCases],
@@ -289,7 +302,8 @@ async def terminate_all_user_sessions(
 
 @api.patch(
     "/users/{user_id}",
-    description="Changes information about specified user"
+    description="Changes information about specified user",
+    tags=["Account management", "User"]
 )
 async def update_user_by_id(
     user_use_case: FromDishka[UserUseCases],
@@ -323,7 +337,8 @@ async def update_user_by_id(
 
 @api.delete(
     "/users/{user_id}",
-    description="Terminates specified user"
+    description="Terminates specified user",
+    tags=["Account management", "Administrative", "User"]
 )
 async def terminate_user(
     user_use_case: FromDishka[UserUseCases],
@@ -334,12 +349,22 @@ async def terminate_user(
             authentication_service.authenticate_by_session_token
         )
     ]
-) -> bool:
+) -> UserTerminated:
     try:
-        return await user_use_case.terminate_user(
+        if await user_use_case.terminate_user(
             user_session_data.user,
             user_id
-        )
+        ):
+            return UserTerminated(
+                user_id=user_id,
+                is_active=False
+            )
+
+        else:
+            raise HTTPException(
+                status_code=400,
+                detail="User is likely already terminated"
+            )
 
     except NotFoundError:
         raise HTTPException(
@@ -356,7 +381,8 @@ async def terminate_user(
 
 @api.put(
     "/users/{user_id}/password",
-    description="Changes password of a specified user"
+    description="Changes password of a specified user",
+    tags=["Account management", "User"]
 )
 async def update_users_password(
     user_use_case: FromDishka[UserUseCases],
@@ -369,13 +395,17 @@ async def update_users_password(
             authentication_service.authenticate_by_session_token
         )
     ]
-) -> bool:
+) -> UserChangedPassword:
     try:
-        return await user_use_case.change_user_password(
+        has_changed: bool = await user_use_case.change_user_password(
             user_session_data.user,
             user_id,
             user_new_password.password_updated_value,
             hashing_settings
+        )
+        return UserChangedPassword(
+            user_id=user_id,
+            changed_password=has_changed
         )
 
     except NotFoundError:

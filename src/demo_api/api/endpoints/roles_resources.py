@@ -12,7 +12,11 @@ from .api_router import api
 from ..services.authentication_service import UserAuthenticatedData
 
 
-@api.get("/roles")
+@api.get(
+    "/roles",
+    description="Lists all roles in system",
+    tags=["Roles"]
+)
 async def get_all_roles(
     _: Annotated[
         UserAuthenticatedData,
@@ -25,7 +29,12 @@ async def get_all_roles(
     return await roles_use_case.list_roles()
 
 
-@api.post("/roles")
+@api.post(
+    "/roles",
+    description="Creates new role in system",
+    tags=["Roles"],
+    status_code=201
+)
 async def create_role(
     user_sessions: Annotated[
         UserAuthenticatedData,
@@ -48,7 +57,12 @@ async def create_role(
         raise HTTPException(status_code=404, detail="Role does not exist for modification")
 
 
-@api.put("/roles/{role_id}")
+@api.put(
+    "/roles/{role_id}",
+    description="Creates new role in system",
+    tags=["Roles"],
+    status_code=201
+)
 async def update_role(
     user_sessions: Annotated[
         UserAuthenticatedData,
@@ -74,7 +88,11 @@ async def update_role(
     except NotFoundError:
         raise HTTPException(status_code=404, detail="Role does not exist for deletion")
 
-@api.delete("/roles/{role_id}")
+@api.delete(
+    "/roles/{role_id}",
+    description="Delete selected role",
+    tags=["Roles"]
+)
 async def delete_role(
     user_sessions: Annotated[
         UserAuthenticatedData,
@@ -97,7 +115,11 @@ async def delete_role(
         raise HTTPException(status_code=404, detail="Role does not exist for deletion")
 
 
-@api.post("/roles/{role_id}/assignments")
+@api.post(
+    "/roles/{role_id}/assignments",
+    description="Assigns role to a user",
+    tags=["Roles", "Permissions"],
+)
 async def assign_user_a_role(
     user_sessions: Annotated[
         UserAuthenticatedData,
@@ -125,7 +147,11 @@ async def assign_user_a_role(
         raise HTTPException(status_code=403, detail="User unauthorized to add roles")
 
 
-@api.delete("/roles/{role_id}/assignments")
+@api.delete(
+    "/roles/{role_id}/assignments",
+    description="Removes role from user",
+    tags=["Roles", "Permissions"]
+)
 async def remove_role_from_user(
     user_sessions: Annotated[
         UserAuthenticatedData,

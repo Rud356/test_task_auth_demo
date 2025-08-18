@@ -5,10 +5,11 @@ from typing_extensions import Annotated
 
 from demo_api.api.services import authentication_service
 from demo_api.dto import Resource, ResourceDetails, ResourcePermissionsUpdate
+from demo_api.storage.exceptions import NotFoundError
 from demo_api.use_cases import ResourceUseCases
 from .api_router import api
+from .dto import ResourcePermissionsModified
 from ..services.authentication_service import UserAuthenticatedData
-from demo_api.storage.exceptions import NotFoundError
 
 
 @api.get(
@@ -152,14 +153,17 @@ async def change_resource_access_permissions(
     resource_use_case: FromDishka[ResourceUseCases],
     resource_id: int,
     resource_permissions: ResourcePermissionsUpdate
-) -> dict[str, str]:
+) -> ResourcePermissionsModified:
     try:
         if await resource_use_case.set_roles_permissions_on_resource(
             user_session.user,
             resource_id,
             resource_permissions
         ):
-            return {"status": "Ok"}
+            return ResourcePermissionsModified(
+                resource_id=resource_id,
+                new_permissions=resource_permissions
+            )
 
         else:
             raise HTTPException(
