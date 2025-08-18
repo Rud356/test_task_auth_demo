@@ -1,7 +1,7 @@
 from uuid import UUID
 
 from dishka import FromDishka
-from fastapi import Depends, Form, HTTPException, Query, Response
+from fastapi import Depends, HTTPException, Query, Response
 from typing_extensions import Annotated
 
 from demo_api.api.services import authentication_service
