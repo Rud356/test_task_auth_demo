@@ -25,8 +25,8 @@ async def get_all_roles(
     return await roles_use_case.list_roles()
 
 
-@api.put("/roles")
-async def update_role(
+@api.post("/roles")
+async def create_role(
     user_sessions: Annotated[
         UserAuthenticatedData,
         Depends(
@@ -47,6 +47,32 @@ async def update_role(
     except NotFoundError:
         raise HTTPException(status_code=404, detail="Role does not exist for modification")
 
+
+@api.put("/roles/{role_id}")
+async def update_role(
+    user_sessions: Annotated[
+        UserAuthenticatedData,
+        Depends(
+            authentication_service.authenticate_by_session_token
+        )
+    ],
+    roles_use_case: FromDishka[RolesUseCases],
+    role_id: int,
+    updated_role: Role
+) -> Role:
+    if role_id != updated_role.role_id:
+        raise HTTPException(status_code=400, detail="Role ids must match")
+
+    try:
+        return await roles_use_case.update_role(
+            user_sessions.user, updated_role
+        )
+
+    except PermissionError:
+        raise HTTPException(status_code=403, detail="User unauthorized to add roles")
+
+    except NotFoundError:
+        raise HTTPException(status_code=404, detail="Role does not exist for deletion")
 
 @api.delete("/roles/{role_id}")
 async def delete_role(
